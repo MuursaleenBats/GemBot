@@ -1,0 +1,119 @@
+{
+    "Google Chrome": "Invoke-WebRequest -Uri 'https://dl.google.com/chrome/install/latest/chrome_installer.exe' -OutFile '$env:TEMP\\chrome_installer.exe'; Start-Process -FilePath '$env:TEMP\\chrome_installer.exe' -Args '/silent /install' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\chrome_installer.exe'",
+    
+    "Mozilla Firefox": "Invoke-WebRequest -Uri 'https://download.mozilla.org/?product=firefox-latest&os=win64&lang=en-US' -OutFile '$env:TEMP\\firefox_installer.exe'; Start-Process -FilePath '$env:TEMP\\firefox_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\firefox_installer.exe'",
+    
+    "7-Zip": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/7zip/7zip/releases/latest').tag_name; $url = \"https://www.7-zip.org/a/7z${latestRelease.Replace('v','')}-x64.exe\"; Invoke-WebRequest -Uri $url -OutFile '$env:TEMP\\7z_installer.exe'; Start-Process -FilePath '$env:TEMP\\7z_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\7z_installer.exe'",
+    
+    "VLC Media Player": "$latestVersion = (Invoke-RestMethod 'https://update.videolan.org/vlc/status-win-x64').windows.version; Invoke-WebRequest -Uri \"https://get.videolan.org/vlc/$latestVersion/win64/vlc-$latestVersion-win64.exe\" -OutFile '$env:TEMP\\vlc_installer.exe'; Start-Process -FilePath '$env:TEMP\\vlc_installer.exe' -Args '/L=1033 /S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\vlc_installer.exe'",
+    
+    "Notepad++": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/notepad-plus-plus/notepad-plus-plus/releases/latest').tag_name; $url = \"https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/$latestRelease/npp.$latestRelease.Installer.x64.exe\"; Invoke-WebRequest -Uri $url -OutFile '$env:TEMP\\npp_installer.exe'; Start-Process -FilePath '$env:TEMP\\npp_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\npp_installer.exe'",
+    
+    "Visual Studio Code": "Invoke-WebRequest -Uri 'https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user' -OutFile '$env:TEMP\\vscode_installer.exe'; Start-Process -FilePath '$env:TEMP\\vscode_installer.exe' -Args '/VERYSILENT /MERGETASKS=!runcode' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\vscode_installer.exe'",
+
+    "Git": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/git-for-windows/git/releases/latest').tag_name; $url = \"https://github.com/git-for-windows/git/releases/download/$latestRelease/Git-$($latestRelease.Substring(1))-64-bit.exe\"; Invoke-WebRequest -Uri $url -OutFile '$env:TEMP\\git_installer.exe'; Start-Process -FilePath '$env:TEMP\\git_installer.exe' -Args '/VERYSILENT /NORESTART' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\git_installer.exe'",
+
+    "Python": "$latestVersion = (Invoke-RestMethod 'https://www.python.org/downloads/').find('Latest Python 3 Release').nextsibling.nextsibling.string.trim(); Invoke-WebRequest -Uri \"https://www.python.org/ftp/python/$latestVersion/python-$latestVersion-amd64.exe\" -OutFile '$env:TEMP\\python_installer.exe'; Start-Process -FilePath '$env:TEMP\\python_installer.exe' -Args '/quiet InstallAllUsers=1 PrependPath=1' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\python_installer.exe'",
+
+    "Node.js": "$latestVersion = (Invoke-RestMethod 'https://nodejs.org/dist/index.json')[0].version; Invoke-WebRequest -Uri \"https://nodejs.org/dist/$latestVersion/node-$latestVersion-x64.msi\" -OutFile '$env:TEMP\\node_installer.msi'; Start-Process -FilePath 'msiexec.exe' -Args '/i $env:TEMP\\node_installer.msi /qn' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\node_installer.msi'",
+
+    "Steam": "Invoke-WebRequest -Uri 'https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe' -OutFile '$env:TEMP\\steam_installer.exe'; Start-Process -FilePath '$env:TEMP\\steam_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\steam_installer.exe'",
+
+    "Adobe Reader DC": "Invoke-WebRequest -Uri 'https://ardownload2.adobe.com/pub/adobe/reader/win/AcrobatDC/2300320269/AcroRdrDC2300320269_en_US.exe' -OutFile '$env:TEMP\\adobe_installer.exe'; Start-Process -FilePath '$env:TEMP\\adobe_installer.exe' -Args '/sAll /rs /msi EULA_ACCEPT=YES' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\adobe_installer.exe'",
+    
+    "Zoom": "Invoke-WebRequest -Uri 'https://zoom.us/client/latest/ZoomInstallerFull.msi' -OutFile '$env:TEMP\\zoom_installer.msi'; Start-Process -FilePath 'msiexec.exe' -Args '/i $env:TEMP\\zoom_installer.msi /qn' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\zoom_installer.msi'",
+
+    "Slack": "$latestVersion = (Invoke-RestMethod 'https://slack.com/api/desktop.latestRelease?platform=windows&architecture=x64&hnpkjorjgokpaniehgkkpgkijggnfles').version; Invoke-WebRequest -Uri \"https://downloads.slack-edge.com/releases/windows/$latestVersion/prod/x64/SlackSetup.exe\" -OutFile '$env:TEMP\\slack_installer.exe'; Start-Process -FilePath '$env:TEMP\\slack_installer.exe' -Args '-s' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\slack_installer.exe'",
+  
+    "Microsoft Teams": "Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2187327&Lmsrc=groupChatMarketingPageWeb&Cmpid=directDownloadWin64' -OutFile '$env:TEMP\\teams_installer.exe'; Start-Process -FilePath '$env:TEMP\\teams_installer.exe' -Args '-s' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\teams_installer.exe'",
+  
+    "WinRAR": "Invoke-WebRequest -Uri 'https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-623.exe' -OutFile '$env:TEMP\\winrar_installer.exe'; Start-Process -FilePath '$env:TEMP\\winrar_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\winrar_installer.exe'",
+  
+    "Audacity": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/audacity/audacity/releases/latest').tag_name; $url = \"https://github.com/audacity/audacity/releases/download/$latestRelease/audacity-win-$($latestRelease.Substring(1))-x64.exe\"; Invoke-WebRequest -Uri $url -OutFile '$env:TEMP\\audacity_installer.exe'; Start-Process -FilePath '$env:TEMP\\audacity_installer.exe' -Args '/VERYSILENT /NORESTART' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\audacity_installer.exe'",
+  
+    "GIMP": "$latestVersion = (Invoke-RestMethod 'https://api.github.com/repos/GNOME/gimp/tags')[0].name; Invoke-WebRequest -Uri \"https://download.gimp.org/pub/gimp/v$($latestVersion.Substring(0,4))/windows/gimp-$latestVersion-setup-1.exe\" -OutFile '$env:TEMP\\gimp_installer.exe'; Start-Process -FilePath '$env:TEMP\\gimp_installer.exe' -Args '/VERYSILENT /NORESTART' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\gimp_installer.exe'",
+  
+    "OBS Studio": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/obsproject/obs-studio/releases/latest').tag_name; $url = \"https://github.com/obsproject/obs-studio/releases/download/$latestRelease/OBS-Studio-$($latestRelease.Substring(1))-Full-Installer-x64.exe\"; Invoke-WebRequest -Uri $url -OutFile '$env:TEMP\\obs_installer.exe'; Start-Process -FilePath '$env:TEMP\\obs_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\obs_installer.exe'",
+  
+    "PostgreSQL": "Invoke-WebRequest -Uri 'https://get.enterprisedb.com/postgresql/postgresql-14.9-1-windows-x64.exe' -OutFile '$env:TEMP\\postgresql_installer.exe'; Start-Process -FilePath '$env:TEMP\\postgresql_installer.exe' -Args '--unattendedmodeui minimal --mode unattended --superpassword postgres' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\postgresql_installer.exe'",
+
+    "MySQL": "$latestVersion = (Invoke-RestMethod 'https://dev.mysql.com/downloads/mysql/').find('Generally Available (GA) Releases').nextsibling.nextsibling.string.trim(); Invoke-WebRequest -Uri \"https://dev.mysql.com/get/Downloads/MySQLInstaller/mysql-installer-community-$latestVersion.0.msi\" -OutFile '$env:TEMP\\mysql_installer.msi'; Start-Process -FilePath 'msiexec.exe' -Args '/i $env:TEMP\\mysql_installer.msi /qn' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\mysql_installer.msi'",
+  
+    "Docker Desktop": "Invoke-WebRequest -Uri 'https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe' -OutFile '$env:TEMP\\docker_installer.exe'; Start-Process -FilePath '$env:TEMP\\docker_installer.exe' -Args 'install --quiet' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\docker_installer.exe'",
+  
+    "Postman": "Invoke-WebRequest -Uri 'https://dl.pstmn.io/download/latest/win64' -OutFile '$env:TEMP\\postman_installer.exe'; Start-Process -FilePath '$env:TEMP\\postman_installer.exe' -Args '-s' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\postman_installer.exe'",
+  
+    "Eclipse IDE": "$latestRelease = (Invoke-RestMethod 'https://www.eclipse.org/downloads/packages/').find('Eclipse IDE for Java Developers').parent.href; Invoke-WebRequest -Uri $latestRelease -OutFile '$env:TEMP\\eclipse.zip'; Expand-Archive -Path '$env:TEMP\\eclipse.zip' -DestinationPath 'C:\\Program Files\\Eclipse' -Force; Remove-Item '$env:TEMP\\eclipse.zip'",
+  
+    "IntelliJ IDEA Community": "$latestVersion = (Invoke-RestMethod 'https://data.services.jetbrains.com/products/releases?code=IIC&latest=true&type=release').IIC[0].version; Invoke-WebRequest -Uri \"https://download.jetbrains.com/idea/ideaIC-$latestVersion.exe\" -OutFile '$env:TEMP\\intellij_installer.exe'; Start-Process -FilePath '$env:TEMP\\intellij_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\intellij_installer.exe'",
+  
+    "Anaconda": "$latestVersion = (Invoke-RestMethod 'https://repo.anaconda.com/archive/').Links | Where-Object {$_.href -match 'Anaconda3-.*-Windows-x86_64.exe'} | Select-Object -First 1 -ExpandProperty href; Invoke-WebRequest -Uri \"https://repo.anaconda.com/archive/$latestVersion\" -OutFile '$env:TEMP\\anaconda_installer.exe'; Start-Process -FilePath '$env:TEMP\\anaconda_installer.exe' -Args '/InstallationType=AllUsers /RegisterPython=1 /S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\anaconda_installer.exe'",
+  
+    "RStudio": "$latestVersion = (Invoke-RestMethod 'https://rstudio.com/products/rstudio/download/').find('RStudio Desktop').nextsibling.nextsibling.string.trim(); Invoke-WebRequest -Uri \"https://download1.rstudio.org/electron/windows/RStudio-$latestVersion.exe\" -OutFile '$env:TEMP\\rstudio_installer.exe'; Start-Process -FilePath '$env:TEMP\\rstudio_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\rstudio_installer.exe'",
+  
+    "Power BI Desktop": "Invoke-WebRequest -Uri 'https://download.microsoft.com/download/8/8/0/880BCA75-79DD-466A-927D-1ABF1F5454B0/PBIDesktopSetup_x64.exe' -OutFile '$env:TEMP\\powerbi_installer.exe'; Start-Process -FilePath '$env:TEMP\\powerbi_installer.exe' -Args '-silent -norestart ACCEPT_EULA=1' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\powerbi_installer.exe'",
+
+    "Foxit PDF Reader": "$latestVersion = (Invoke-RestMethod 'https://www.foxit.com/downloads/latest.html?product=Foxit-Reader&platform=Windows&version=&package_type=&language=English&formId=len').version; Invoke-WebRequest -Uri \"https://cdn01.foxitsoftware.com/product/reader/desktop/win/$latestVersion/FoxitReader${latestVersion}_enu_Setup.exe\" -OutFile '$env:TEMP\\foxit_installer.exe'; Start-Process -FilePath '$env:TEMP\\foxit_installer.exe' -Args '/verysilent' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\foxit_installer.exe'",
+
+    "VirtualBox": "$latestVersion = (Invoke-RestMethod 'https://download.virtualbox.org/virtualbox/LATEST.TXT').Trim(); Invoke-WebRequest -Uri \"https://download.virtualbox.org/virtualbox/$latestVersion/VirtualBox-$latestVersion-Win.exe\" -OutFile '$env:TEMP\\virtualbox_installer.exe'; Start-Process -FilePath '$env:TEMP\\virtualbox_installer.exe' -Args '--silent' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\virtualbox_installer.exe'",
+
+    "Dropbox": "Invoke-WebRequest -Uri 'https://www.dropbox.com/download?plat=win&type=full' -OutFile '$env:TEMP\\dropbox_installer.exe'; Start-Process -FilePath '$env:TEMP\\dropbox_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\dropbox_installer.exe'",
+
+    "Skype": "Invoke-WebRequest -Uri 'https://go.skype.com/windows.desktop.download' -OutFile '$env:TEMP\\skype_installer.exe'; Start-Process -FilePath '$env:TEMP\\skype_installer.exe' -Args '/VERYSILENT /NORESTART' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\skype_installer.exe'",
+
+    "TeamViewer": "Invoke-WebRequest -Uri 'https://download.teamviewer.com/download/TeamViewer_Setup.exe' -OutFile '$env:TEMP\\teamviewer_installer.exe'; Start-Process -FilePath '$env:TEMP\\teamviewer_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\teamviewer_installer.exe'",
+
+    "Evernote": "$latestVersion = (Invoke-RestMethod 'https://evernote.com/download/get.php?file=Win').Headers.'Content-Disposition' -replace '.*filename=Evernote_|\\.exe.*'; Invoke-WebRequest -Uri \"https://cdn1.evernote.com/boron/win/builds/Evernote-$latestVersion-setup.exe\" -OutFile '$env:TEMP\\evernote_installer.exe'; Start-Process -FilePath '$env:TEMP\\evernote_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\evernote_installer.exe'",
+
+    "Trello": "Invoke-WebRequest -Uri 'https://api.trello.com/download/desktop/windows' -OutFile '$env:TEMP\\trello_installer.exe'; Start-Process -FilePath '$env:TEMP\\trello_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\trello_installer.exe'",
+
+    "CCleaner": "$latestVersion = (Invoke-RestMethod 'https://www.ccleaner.com/ccleaner/download/standard').downloadlink -replace '.*ccsetup|\\.exe'; Invoke-WebRequest -Uri \"https://download.ccleaner.com/ccsetup$latestVersion.exe\" -OutFile '$env:TEMP\\ccleaner_installer.exe'; Start-Process -FilePath '$env:TEMP\\ccleaner_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\ccleaner_installer.exe'",
+
+    "Malwarebytes": "Invoke-WebRequest -Uri 'https://downloads.malwarebytes.com/file/mb4_offline' -OutFile '$env:TEMP\\malwarebytes_installer.exe'; Start-Process -FilePath '$env:TEMP\\malwarebytes_installer.exe' -Args '/VERYSILENT /NORESTART' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\malwarebytes_installer.exe'",
+
+    "Avast Free Antivirus": "Invoke-WebRequest -Uri 'https://install.avastbrowser.com/avast/AvastSecureBrowserSetup.exe' -OutFile '$env:TEMP\\avast_installer.exe'; Start-Process -FilePath '$env:TEMP\\avast_installer.exe' -Args '/silent' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\avast_installer.exe'",
+
+    "Spotify": "Invoke-WebRequest -Uri 'https://download.scdn.co/SpotifySetup.exe' -OutFile '$env:TEMP\\spotify_installer.exe'; Start-Process -FilePath '$env:TEMP\\spotify_installer.exe' -Args '/silent' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\spotify_installer.exe'",
+
+    "iTunes": "Invoke-WebRequest -Uri 'https://secure-appldnld.apple.com/itunes12/001-97787-20210421-F0E5A3C2-A2C9-11EB-A40B-A128318AD179/iTunes64Setup.exe' -OutFile '$env:TEMP\\itunes_installer.exe'; Start-Process -FilePath '$env:TEMP\\itunes_installer.exe' -Args '/qn' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\itunes_installer.exe'",
+
+    "Discord": "Invoke-WebRequest -Uri 'https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x86' -OutFile '$env:TEMP\\discord_installer.exe'; Start-Process -FilePath '$env:TEMP\\discord_installer.exe' -Args '-s' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\discord_installer.exe'",
+
+    "GoToMeeting": "Invoke-WebRequest -Uri 'https://link.gotomeeting.com/latest-msi' -OutFile '$env:TEMP\\gotomeeting_installer.msi'; Start-Process -FilePath 'msiexec.exe' -Args '/i $env:TEMP\\gotomeeting_installer.msi /qn' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\gotomeeting_installer.msi'",
+
+    "Webex": "Invoke-WebRequest -Uri 'https://binaries.webex.com/WebexTeamsDesktop-Windows-Gold/Webex.msi' -OutFile '$env:TEMP\\webex_installer.msi'; Start-Process -FilePath 'msiexec.exe' -Args '/i $env:TEMP\\webex_installer.msi /qn' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\webex_installer.msi'",
+
+    "OpenVPN": "$latestVersion = (Invoke-RestMethod 'https://openvpn.net/community-downloads/').Links | Where-Object {$_.href -match 'openvpn-install-.*-I601-amd64.msi'} | Select-Object -First 1 -ExpandProperty href; Invoke-WebRequest -Uri $latestVersion -OutFile '$env:TEMP\\openvpn_installer.msi'; Start-Process -FilePath 'msiexec.exe' -Args '/i $env:TEMP\\openvpn_installer.msi /qn' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\openvpn_installer.msi'",
+
+    "NordVPN": "Invoke-WebRequest -Uri 'https://downloads.nordcdn.com/apps/windows/NordVPN/latest/NordVPNSetup.exe' -OutFile '$env:TEMP\\nordvpn_installer.exe'; Start-Process -FilePath '$env:TEMP\\nordvpn_installer.exe' -Args '/VERYSILENT /NORESTART' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\nordvpn_installer.exe'",
+
+    "ExpressVPN": "Invoke-WebRequest -Uri 'https://www.expressvpn.works/clients/windows/expressvpn_windows_latest.exe' -OutFile '$env:TEMP\\expressvpn_installer.exe'; Start-Process -FilePath '$env:TEMP\\expressvpn_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\expressvpn_installer.exe'",
+
+    "Surfshark": "Invoke-WebRequest -Uri 'https://downloads.surfshark.com/windows/latest/SurfsharkSetup.exe' -OutFile '$env:TEMP\\surfshark_installer.exe'; Start-Process -FilePath '$env:TEMP\\surfshark_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\surfshark_installer.exe'",
+
+    "qBittorrent": "$latestVersion = (Invoke-RestMethod 'https://sourceforge.net/projects/qbittorrent/rss?path=/qbittorrent-win32').entries[0].title -replace 'qbittorrent-|.exe'; Invoke-WebRequest -Uri \"https://sourceforge.net/projects/qbittorrent/files/qbittorrent-win32/qbittorrent-$latestVersion/qbittorrent_${latestVersion}_x64_setup.exe/download\" -OutFile '$env:TEMP\\qbittorrent_installer.exe'; Start-Process -FilePath '$env:TEMP\\qbittorrent_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\qbittorrent_installer.exe'",
+
+    "uTorrent": "Invoke-WebRequest -Uri 'https://download-hr.utorrent.com/track/stable/endpoint/utorrent/os/windows' -OutFile '$env:TEMP\\utorrent_installer.exe'; Start-Process -FilePath '$env:TEMP\\utorrent_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\utorrent_installer.exe'",
+
+    "Transmission": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/transmission/transmission/releases/latest').tag_name; Invoke-WebRequest -Uri \"https://github.com/transmission/transmission/releases/download/$latestRelease/transmission-$latestRelease-x64.msi\" -OutFile '$env:TEMP\\transmission_installer.msi'; Start-Process -FilePath 'msiexec.exe' -Args '/i $env:TEMP\\transmission_installer.msi /qn' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\transmission_installer.msi'",
+
+    "ShareX": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/ShareX/ShareX/releases/latest').tag_name; Invoke-WebRequest -Uri \"https://github.com/ShareX/ShareX/releases/download/$latestRelease/ShareX-$latestRelease-setup.exe\" -OutFile '$env:TEMP\\sharex_installer.exe'; Start-Process -FilePath '$env:TEMP\\sharex_installer.exe' -Args '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\sharex_installer.exe'",
+
+    "Lightshot": "Invoke-WebRequest -Uri 'https://app.prntscr.com/build/setup-lightshot.exe' -OutFile '$env:TEMP\\lightshot_installer.exe'; Start-Process -FilePath '$env:TEMP\\lightshot_installer.exe' -Args '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\lightshot_installer.exe'",
+
+    "Greenshot": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/greenshot/greenshot/releases/latest').tag_name; Invoke-WebRequest -Uri \"https://github.com/greenshot/greenshot/releases/download/$latestRelease/Greenshot-INSTALLER-$($latestRelease.Replace('Greenshot-',''))-RELEASE.exe\" -OutFile '$env:TEMP\\greenshot_installer.exe'; Start-Process -FilePath '$env:TEMP\\greenshot_installer.exe' -Args '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\greenshot_installer.exe'",
+
+    "Kdenlive": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/KDE/kdenlive/releases/latest').tag_name; Invoke-WebRequest -Uri \"https://download.kde.org/stable/kdenlive/$latestRelease/windows/kdenlive-$latestRelease.exe\" -OutFile '$env:TEMP\\kdenlive_installer.exe'; Start-Process -FilePath '$env:TEMP\\kdenlive_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\kdenlive_installer.exe'",
+
+    "Godot": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/godotengine/godot/releases/latest').tag_name; Invoke-WebRequest -Uri \"https://github.com/godotengine/godot/releases/download/$latestRelease/Godot_v$($latestRelease.Replace('v',''))-stable_win64.exe\" -OutFile '$env:TEMP\\godot_installer.exe'; Start-Process -FilePath '$env:TEMP\\godot_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\godot_installer.exe'",
+
+    "Epic Games Launcher": "Invoke-WebRequest -Uri 'https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi' -OutFile '$env:TEMP\\epic_installer.msi'; Start-Process -FilePath 'msiexec.exe' -Args '/i $env:TEMP\\epic_installer.msi /qn' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\epic_installer.msi'",
+
+    "GOG Galaxy": "Invoke-WebRequest -Uri 'https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy_2.0.exe' -OutFile '$env:TEMP\\gog_installer.exe'; Start-Process -FilePath '$env:TEMP\\gog_installer.exe' -Args '/VERYSILENT /NORESTART' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\gog_installer.exe'",
+
+    "Notion": "Invoke-WebRequest -Uri 'https://www.notion.so/desktop/windows/download' -OutFile '$env:TEMP\\notion_installer.exe'; Start-Process -FilePath '$env:TEMP\\notion_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\notion_installer.exe'",
+    
+    "Atom": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/atom/atom/releases/latest').tag_name; Invoke-WebRequest -Uri \"https://github.com/atom/atom/releases/download/$latestRelease/atom-windows.exe\" -OutFile '$env:TEMP\\atom_installer.exe'; Start-Process -FilePath '$env:TEMP\\atom_installer.exe' -Args '/S' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\atom_installer.exe' ",
+
+    "Brave Browser": "$latestRelease = (Invoke-RestMethod 'https://api.github.com/repos/brave/brave-browser/releases/latest').tag_name; Invoke-WebRequest -Uri \"https://github.com/brave/brave-browser/releases/download/$latestRelease/BraveBrowserSetup.exe\" -OutFile '$env:TEMP\\brave_installer.exe'; Start-Process -FilePath '$env:TEMP\\brave_installer.exe' -Args '/silent' -Verb RunAs -Wait; Remove-Item '$env:TEMP\\brave_installer.exe'"
+}
