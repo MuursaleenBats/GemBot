@@ -1,0 +1,31 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20240724222053
+Username: DESKTOP-408QMVK\Haider
+RunAs User: DESKTOP-408QMVK\Haider
+Configuration Name: 
+Machine: DESKTOP-408QMVK (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File D:\Projects New\winAuto-main\installer\install_programs.ps1 -app Line
+Process ID: 8376
+PSVersion: 5.1.19041.4648
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.4648
+BuildVersion: 10.0.19041.4648
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is D:\Projects New\winAuto-main\installer\install_log.txt
+Script started at 07/24/2024 22:20:54
+Running as user: DESKTOP-408QMVK\Haider
+Script path: D:\Projects New\winAuto-main\installer\install_programs.ps1
+Arguments: -app Line
+An error occurred:
+The term 'param' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+at <ScriptBlock>, D:\Projects New\winAuto-main\installer\install_programs.ps1: line 14
+Script ended at 07/24/2024 22:20:54
+**********************
+Windows PowerShell transcript end
+End time: 20240724222054
+**********************
