@@ -1,0 +1,261 @@
+[
+    {
+        "Name": "VLC",
+        "Url": "https://get.videolan.org/vlc/3.0.18/win64/vlc-3.0.18-win64.exe",
+        "InstallerArgs": "/L=1033 /S"
+    },
+  {
+      "Name": "7-Zip",
+      "Url": "https://www.7-zip.org/a/7z2201-x64.exe",
+      "InstallerArgs": "/S"
+  },
+  {
+      "Name": "Google Chrome",
+      "Url": "https://dl.google.com/chrome/install/latest/chrome_installer.exe",
+      "InstallerArgs": "/silent /install"
+  },
+  {
+    "Name": "MySQL",
+    "Url": "https://dl.google.com/chrome/install/latest/chrome_installer.exe",
+    "InstallerArgs": "/silent /install"
+  },
+  {
+      "Name": "Mozilla Firefox",
+      "Url": "https://download.mozilla.org/?product=firefox-latest-ssl&os=win64&lang=en-US",
+      "InstallerArgs": "/S"
+  },
+  {
+      "Name": "Adobe Acrobat Reader",
+      "Url": "https://ardownload2.adobe.com/pub/adobe/reader/win/AcrobatDC/2300720161/AcroRdrDC2300720161_en_US.exe",
+      "InstallerArgs": "/sAll"
+  },
+  {
+      "Name": "Notepad++", 
+      "Url": "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.4.7/npp.8.4.7.Installer.x64.exe", 
+      "InstallerArgs": "/S"
+  },
+  {
+      "Name": "Git",
+      "Url": "https://github.com/git-for-windows/git/releases/download/v2.41.0.windows.1/Git-2.41.0-64-bit.exe",
+      "InstallerArgs": "/SILENT"
+  },
+  {
+      "Name": "Python",
+      "Url": "https://www.python.org/ftp/python/3.10.6/python-3.10.6-amd64.exe",
+      "InstallerArgs": "/quiet InstallAllUsers=1 PrependPath=1"
+  },
+  {
+      "Name": "Node.js",
+      "Url": "https://nodejs.org/dist/v18.12.1/node-v18.12.1-x64.msi",
+      "InstallerArgs": "/quiet"
+  },
+  {
+      "Name": "Postman",
+      "Url": "https://dl.pstmn.io/download/latest/win64",
+      "InstallerArgs": "/S"
+  },
+  {
+      "Name": "Slack",
+      "Url": "https://downloads.slack-edge.com/releases_windows/SlackSetup.exe",
+      "InstallerArgs": "/S"
+  },
+  {
+      "Name": "Visual Studio Code",
+      "Url": "https://update.code.visualstudio.com/latest/win32-x64-user/stable",
+      "InstallerArgs": "/silent"
+  },
+  {
+      "Name": "Microsoft Teams",
+      "Url": "https://statics.teams.cdn.office.net/production-windows-x64/1.6.00.15264/Teams_windows_x64.exe",
+      "InstallerArgs": "/S"
+  },
+  {
+      "Name": "FileZilla",
+      "Url": "https://dl4.cdn.filezilla-project.org/client/FileZilla_3.64.0_win64-setup.exe",
+      "InstallerArgs": "/S"
+  },
+  {
+      "Name": "PuTTY",
+      "Url": "https://the.earth.li/~sgtatham/putty/latest/w64/putty-64bit-0.78-installer.msi",
+      "InstallerArgs": "/quiet"
+  },
+  {
+      "Name": "Dropbox",
+      "Url": "https://www.dropbox.com/download?plat=win&type=full",
+      "InstallerArgs": "/S"
+  },
+  {
+      "Name": "LibreOffice",
+      "Url": "https://download.documentfoundation.org/libreoffice/stable/7.5.0/win/x86_64/LibreOffice_7.5.0_Win_x64.msi",
+      "InstallerArgs": "/quiet"
+  },
+  {
+      "Name": "Discord",
+      "Url": "https://discord.com/api/download?platform=win&format=exe",
+      "InstallerArgs": "/S"
+  },
+  {
+      "Name": "VirtualBox",
+      "Url": "https://download.virtualbox.org/virtualbox/7.0.10/VirtualBox-7.0.10-157156-Win.exe",
+      "InstallerArgs": "--silent"
+  },
+  {
+      "Name": "IntelliJ IDEA Community",
+      "Url": "https://download.jetbrains.com/idea/ideaIC-2023.1.1.exe",
+      "InstallerArgs": "/S"
+  },
+  {
+    "Name": "Android Studio",
+    "Url": "https://redirector.gvt1.com/edgedl/android/studio/install/2022.2.1.20/android-studio-2022.2.1.20-windows.exe",
+    "InstallerArgs": "/S"
+},
+{
+    "Name": "OBS Studio",
+    "Url": "https://cdn-fastly.obsproject.com/downloads/OBS-Studio-29.1.3-Full-Installer-x64.exe",
+    "InstallerArgs": "/S"
+},
+  {
+      "Name": "KeePass",
+      "Url": "https://downloads.sourceforge.net/project/keepass/KeePass%202.x/2.49/KeePass-2.49-Setup.exe",
+      "InstallerArgs": "/S"
+  },
+{
+    "Name": "Telegram Desktop",
+    "Url": "https://telegram.org/dl/desktop/windows",
+    "InstallerArgs": "/S"
+},
+{
+    "Name": "Winrar",
+    "Url": "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-623.exe",
+    "InstallerArgs": "/S"
+},
+{
+    "Name": "PostgreSQL",
+    "Url": "https://get.enterprisedb.com/postgresql/postgresql-14.9-1-windows-x64.exe",
+    "InstallerArgs": "/S"
+},
+{
+    
+        "Name": "WhatsApp",
+        "Url": "https://www.microsoft.com/store/productId/9NKSQGP7F2NH",
+        "InstallerArgs": ""
+    
+},
+{
+    "Name": "Signal",
+    "Url": "https://updates.signal.org/desktop/signal-desktop-win-6.8.0.exe",
+    "InstallerArgs": "/S"
+},
+{
+    "Name": "Slack",
+    "Url": "https://downloads.slack-edge.com/releases_windows/SlackSetup.exe",
+    "InstallerArgs": "/S"
+},
+{
+    "Name": "Skype",
+    "Url": "https://go.skype.com/windows.desktop.download",
+    "InstallerArgs": "/silent"
+},
+{
+    "Name": "Zoom",
+    "Url": "https://zoom.us/client/latest/ZoomInstaller.exe",
+    "InstallerArgs": "/S"
+},
+{
+    "Name": "Viber",
+    "Url": "https://download.viber.com/desktop/windows/ViberSetup.exe",
+    "InstallerArgs": "/S"
+},
+{
+    "Name": "WeChat",
+    "Url": "https://dldir1.qq.com/weixin/Windows/WeChatSetup.exe",
+    "InstallerArgs": "/S"
+},
+{
+    "Name": "Line",
+    "Url": "https://desktop.line-scdn.net/win/new/LineInst.exe",
+    "InstallerArgs": "/S"
+},
+{
+    "Name": "Facebook Messenger",
+    "Url": "https://www.microsoft.com/store/productId/9WZDNCRF0083",
+    "InstallerArgs": ""
+},
+
+    {
+      "Name": "MySQL",
+      "Url": "https://dev.mysql.com/get/Downloads/MySQLInstaller/mysql-installer-community-8.0.33.0.msi",
+      "InstallerArgs": "/quiet"
+    },
+    {
+      "Name": "Docker Desktop",
+      "Url": "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe",
+      "InstallerArgs": "install --quiet"
+    },
+    {
+      "Name": "Eclipse IDE",
+      "Url": "https://www.eclipse.org/downloads/download.php?file=/technology/epp/downloads/release/2023-03/R/eclipse-java-2023-03-R-win32-x86_64.zip",
+      "InstallerArgs": ""
+    },
+    {
+      "Name": "Anaconda",
+      "Url": "https://repo.anaconda.com/archive/Anaconda3-2023.03-Windows-x86_64.exe",
+      "InstallerArgs": "/S"
+    },
+    {
+      "Name": "RStudio",
+      "Url": "https://download1.rstudio.org/desktop/windows/RStudio-2023.03.0-386.exe",
+      "InstallerArgs": "/S"
+    },
+    {
+      "Name": "Power BI Desktop",
+      "Url": "https://download.microsoft.com/download/8/8/0/880BCA75-79DD-466A-927D-1ABF1F5454B0/PBIDesktopSetup_x64.exe",
+      "InstallerArgs": "-q -norestart ACCEPT_EULA=1"
+    },
+    {
+      "Name": "Foxit PDF Reader",
+      "Url": "https://cdn01.foxitsoftware.com/product/reader/desktop/win/12.0.1/FoxitPDFReader1201_L10N_Setup_Prom.exe",
+      "InstallerArgs": "/verysilent"
+    },
+    {
+      "Name": "Dropbox",
+      "Url": "https://www.dropbox.com/download?plat=win&type=full",
+      "InstallerArgs": "/S"
+    },
+    {
+      "Name": "TeamViewer",
+      "Url": "https://download.teamviewer.com/download/TeamViewer_Setup_x64.exe",
+      "InstallerArgs": "/S"
+    },
+    {
+      "Name": "AnyDesk",
+      "Url": "https://download.anydesk.com/AnyDesk.exe",
+      "InstallerArgs": "--silent"
+    },
+    {
+      "Name": "uTorrent",
+      "Url": "https://download-hr.utorrent.com/track/stable/endpoint/utorrent/os/windows",
+      "InstallerArgs": "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-"
+    },
+    {
+      "Name": "Atom",
+      "Url": "https://github.com/atom/atom/releases/download/v1.60.0/AtomSetup-x64.exe",
+      "InstallerArgs": "--silent"
+    },
+    {
+      "Name": "Brave Browser",
+      "Url": "https://github.com/brave/brave-browser/releases/download/v1.51.114/BraveBrowserStandaloneSetup.exe",
+      "InstallerArgs": "/silent /install"
+    },
+    {
+      "Name": "Steam",
+      "Url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe",
+      "InstallerArgs": "/S"
+    },
+    {
+      "Name": "VMware Workstation Player",
+      "Url": "https://download3.vmware.com/software/WKST-PLAYER-1700/VMware-player-full-17.0.0-20800274.exe",
+      "InstallerArgs": "/s /v/qn EULAS_AGREED=1 AUTOSOFTWAREUPDATE=0 DATACOLLECTION=0"
+    }
+  
+]
