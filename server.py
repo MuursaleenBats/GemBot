@@ -14,7 +14,6 @@ import re
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
-
 os.environ["API_KEY"] = "AIzaSyDsTNYvMqYM-LAGUd8fB12rWzVixDsU914"
 genai.configure(api_key=os.environ["API_KEY"])
 g_model = genai.GenerativeModel('gemini-1.5-pro')
@@ -127,7 +126,6 @@ def send_to_gemini(command, model):
         print(f"Error sending command to Gemini: {e}")
         return None
 
-    
 def generate_and_save_code(user_input, model):
     language = extract_language(user_input)
     
@@ -189,36 +187,67 @@ def get_file_extension(language):
     }
     return extensions.get(language, '.txt')
 
+def listen_for_command():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening for command...")
+        audio = recognizer.listen(source)
+    
+    try:
+        command = recognizer.recognize_google(audio)
+        print(f"Recognized command: {command}")
+        return command
+    except sr.UnknownValueError:
+        print("Could not understand audio")
+        return None
+    except sr.RequestError as e:
+        print(f"Could not request results from Google Speech Recognition service; {e}")
+        return None
 
 @app.route('/command', methods=['POST'])
 def handle_command():
     data = request.json
     user_input = data.get('command')
     print(user_input)
+
+    if user_input.lower() == "mic":
+        # Activate speech recognition
+        spoken_command = listen_for_command()
+        if spoken_command:
+            # Process the spoken command
+            return process_command(spoken_command)
+        else:
+            return jsonify({'result': "Failed to recognize speech command."})
+    else:
+        # Process the text command as before
+        return process_command(user_input)
+
+def process_command(command):
     result = "Did not work"
-    response = user_input  # Simulating the Gemini response
+    response = command  # Simulating the Gemini response
     function_name, similarity_score = find_most_similar_function(response)
-    if "give code" in user_input.lower() or "generate code" in user_input.lower():
-        generated_file = generate_and_save_code(user_input, g_model)
+    
+    if "give code" in command.lower() or "generate code" in command.lower():
+        generated_file = generate_and_save_code(command, g_model)
         if generated_file:
             result = f"\nCode has been generated, saved to {generated_file}, and executed (if Python)."
             print(result)
-    if similarity_score >= 0.30:
+    elif similarity_score >= 0.30:
         if function_name == "open_website_in_chrome":
-            extracted_url = extract_url(user_input)
+            extracted_url = extract_url(command)
             if extracted_url:
                 result = open_website_in_chrome(extracted_url)
             else:
                 result = "No valid URL found in the input."
         elif function_name == "start_application":
-            app_name = extract_app_name(user_input)
+            app_name = extract_app_name(command)
             if app_name:
                 most_similar_app, most_similar_exe = find_most_similar_app(app_name)
                 result = start_application(most_similar_exe)
             else:
                 result = "Could not extract application name from input."
         elif function_name == "install_application":
-            app_name = extract_app_name(user_input)
+            app_name = extract_app_name(command)
             if app_name:
                 code = find_installation(app_name)
                 result = install_application(code)
