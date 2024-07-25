@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import "package:http/http.dart" as http;
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +15,30 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  TextEditingController _controller = TextEditingController();
+
+  Future<void> _sendCommand(String command) async {
+    final response = await http.post(
+      Uri.parse('http://localhost:5000/command'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'command': command,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // If the server returns an OK response, parse the JSON
+      print('Response data: ${response.body}');
+    } else {
+      // If the server did not return a 200 OK response,
+      // throw an exception.
+      throw Exception('Failed to send command');
+    }
+    _controller.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -108,6 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               width: textFormFieldWidth,
               child: TextFormField(
+                controller: _controller,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(30.0)),
@@ -122,11 +149,28 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderSide: BorderSide(color: Colors.white),
                   ),
                   prefixIcon: IconButton(
-                    onPressed: () => null,
+                    onPressed: () => _sendCommand("mic"),
                     splashRadius: 20.0,
                     icon: Icon(
                       Icons.mic,
                       color: Color(0x90FFFFFF),
+                    ),
+                  ),
+                  suffixIcon: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Ink(
+                      decoration: const ShapeDecoration(
+                        color: Colors.white,
+                        shape: CircleBorder(),
+                      ),
+                      child: IconButton(
+                        onPressed: () => _sendCommand(_controller.text),
+                        splashRadius: 20.0,
+                        icon: Icon(
+                          Icons.upload_rounded,
+                          color: Color.fromARGB(144, 7, 7, 7),
+                        ),
+                      ),
                     ),
                   ),
                   hintText: "Enter Prompt",
