@@ -60,6 +60,7 @@ def get_app_path(app_name):
             key_2 = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon")
             explorer_path, _ = winreg.QueryValueEx(key_2, "Shell")
             return os.path.normpath(explorer_path)
+        
     except WindowsError as e:
         print(f"Failed to get {app_name} path. Error: {e}")
     return None
@@ -71,9 +72,13 @@ def start_application(app_name):
             app = Application().start(app_path)
             return f"{app_name} started successfully."
         except Exception as e:
-            return f"Failed to start {app_name}. Error: {e}"
+            return f"Failed to start {app_name}. Error: {e}"       
     else:
-        return f"{app_name} not found."
+        try:
+            app = Application().start(f"{app_name}")
+            return f"{app_name} started successfully."
+        except Exception as e:
+            return f"Failed to start {app_name}."
 
 def install_application(code):
     try:
