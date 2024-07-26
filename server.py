@@ -13,13 +13,18 @@ from sentence_transformers import SentenceTransformer
 import re
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
+import win32gui
+import win32process
+import win32con
+import psutil
+from installer.app_install import AppInstaller
 
 os.environ["API_KEY"] = "AIzaSyDsTNYvMqYM-LAGUd8fB12rWzVixDsU914"
 genai.configure(api_key=os.environ["API_KEY"])
 g_model = genai.GenerativeModel('gemini-1.5-pro')
 
 app = Flask(__name__)
-
+installer = AppInstaller()
 # Load datasets
 with open('app_name.json', 'r') as file:
     apps_to_check = json.load(file)
@@ -31,7 +36,8 @@ with open('installation_list.json', 'r') as file:
 functions = {
     "Open website in chrome": "open_website_in_chrome",
     "Start application": "start_application",
-    "Install application": "install_application",
+    "Install app": "install_application",
+    "Close window": "close_window_function",
     "Generate code": "generate_and_save_code"
 }
 
@@ -54,6 +60,7 @@ def get_app_path(app_name):
             key_2 = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon")
             explorer_path, _ = winreg.QueryValueEx(key_2, "Shell")
             return os.path.normpath(explorer_path)
+        
     except WindowsError as e:
         print(f"Failed to get {app_name} path. Error: {e}")
     return None
@@ -65,9 +72,13 @@ def start_application(app_name):
             app = Application().start(app_path)
             return f"{app_name} started successfully."
         except Exception as e:
-            return f"Failed to start {app_name}. Error: {e}"
+            return f"Failed to start {app_name}. Error: {e}"       
     else:
-        return f"{app_name} not found."
+        try:
+            app = Application().start(f"{app_name}")
+            return f"{app_name} started successfully."
+        except Exception as e:
+            return f"Failed to start {app_name}."
 
 def install_application(code):
     try:
@@ -125,6 +136,61 @@ def send_to_gemini(command, model):
     except Exception as e:
         print(f"Error sending command to Gemini: {e}")
         return None
+
+def close_window_function(partial_name):
+    def list_windows():
+        def winEnumHandler(hwnd, ctx):
+            if win32gui.IsWindowVisible(hwnd):
+                title = win32gui.GetWindowText(hwnd)
+                if title:
+                    try:
+                        _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                        process = psutil.Process(pid)
+                        ctx.append(f"{title} (Process: {process.name()})")
+                    except:
+                        ctx.append(title)
+        windows = []
+        win32gui.EnumWindows(winEnumHandler, windows)
+        return windows
+
+    def find_window(partial_name):
+        partial_name = partial_name.lower()
+        matching_windows = []
+        for window in list_windows():
+            if partial_name in window.lower():
+                matching_windows.append(window)
+        return matching_windows
+
+    matching_windows = find_window(partial_name)
+    if matching_windows:
+        if len(matching_windows) == 1:
+            full_name = matching_windows[0]
+            title = full_name.split(" (Process: ")[0]
+            process_name = full_name.split("(Process: ")[1][:-1]  # Remove the last ')'
+            
+            def enum_windows_callback(hwnd, result):
+                if win32gui.IsWindowVisible(hwnd) and title.lower() in win32gui.GetWindowText(hwnd).lower():
+                    _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                    if psutil.Process(pid).name().lower() == process_name.lower():
+                        result.append(hwnd)
+                return True
+
+            result = []
+            win32gui.EnumWindows(enum_windows_callback, result)
+            
+            if result:
+                hwnd = result[0]
+                try:
+                    win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
+                    return f"Sent close command to window: {full_name}"
+                except Exception as e:
+                    return f"Error while trying to close window {full_name}: {str(e)}"
+            else:
+                return f"Found window in list, but couldn't interact with it: {full_name}"
+        else:
+            return f"Multiple matching windows found: {', '.join(matching_windows)}. Please be more specific."
+    else:
+        return f"No windows found matching: {partial_name}. Available windows: {', '.join(list_windows())}"
 
 def generate_and_save_code(user_input, model):
     language = extract_language(user_input)
@@ -249,8 +315,13 @@ def process_command(command):
         elif function_name == "install_application":
             app_name = extract_app_name(command)
             if app_name:
-                code = find_installation(app_name)
-                result = install_application(code)
+                result = installer.install_app(app_name)
+            else:
+                result = "Could not extract application name from input."
+        elif function_name == "close_window_function":
+            app_name = extract_app_name(command)
+            if app_name:
+                result = close_window_function(app_name)
             else:
                 result = "Could not extract application name from input."
     else:
@@ -268,10 +339,13 @@ def extract_url(text):
 def extract_app_name(text):
     start_match = re.search(r'\bstart\b\s+(\w+)', text)
     install_match = re.search(r'\binstall\b\s+(\w+)', text)
+    close_match = re.search(r'\bclose\b\s+(\w+)', text)
     if start_match:
         return start_match.group(1)
     elif install_match:
         return install_match.group(1)
+    elif close_match:
+        return close_match.group(1)
     return None
 
 if __name__ == "__main__":
