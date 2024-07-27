@@ -25,6 +25,8 @@ import logging
 from installer.app_install import AppInstaller
 import threading
 import time
+import tkinter as tk
+from tkinter import filedialog,simpledialog
 #sab changa si
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -230,24 +232,52 @@ def generate_and_save_code(user_input, model):
     
     if generated_code:
         extension = get_file_extension(language)
-        filename = f"generated_code{extension}"
         
         # Remove any potential markdown code block syntax
         generated_code = generated_code.strip('`')
         if generated_code.startswith(language):
             generated_code = generated_code[len(language):].strip()
         
-        with open(filename, 'w') as file:
-            file.write(generated_code)
+        # Create a root window
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
         
-        print(f"Generated code saved to {filename}")
+        # Ask for file name
+        file_name = simpledialog.askstring("File Name", f"Enter a name for the {language} file:", 
+                                           initialvalue=f"generated_code{extension}")
+        if file_name is None:  # User cancelled
+            print("File save cancelled.")
+            return None
+        
+        if not file_name.endswith(extension):
+            file_name += extension
+        
+        # Ask for save location
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=extension,
+            filetypes=[(f"{language.capitalize()} files", f"*{extension}"), ("All files", "*.*")],
+            title="Save Generated Code",
+            initialfile=file_name
+        )
+        
+        if not file_path:  # User cancelled
+            print("File save cancelled.")
+            return None
+        
+        try:
+            with open(file_path, 'w') as file:
+                file.write(generated_code)
+            print(f"Generated code saved to {file_path}")
+        except IOError as e:
+            print(f"Error saving file: {e}")
+            return None
         
         # Execute the code if it's Python
         if language.lower() == 'python':
             print("\nExecuting the generated Python code:")
             try:
                 # Use subprocess to run the Python script
-                result = subprocess.run([sys.executable, filename], capture_output=True, text=True, timeout=10)
+                result = subprocess.run([sys.executable, file_path], capture_output=True, text=True, timeout=10)
                 print("Output:")
                 print(result.stdout)
                 if result.stderr:
@@ -260,7 +290,7 @@ def generate_and_save_code(user_input, model):
         else:
             print(f"\nNote: Automatic execution is only supported for Python. The {language} code has been saved but not executed.")
         
-        return filename
+        return file_path
     else:
         print("Failed to generate code.")
         return None
