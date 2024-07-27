@@ -23,6 +23,9 @@ import psutil
 import time
 import logging
 from installer.app_install import AppInstaller
+import threading
+import time
+#sab changa si
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -71,6 +74,27 @@ def get_app_path(app_name):
     except WindowsError as e:
         print(f"Failed to get {app_name} path. Error: {e}")
     return None
+
+def listen_for_keyword():
+    recognizer = sr.Recognizer()
+    while True:
+        with sr.Microphone() as source:
+            print("Listening for 'Gemini'...")
+            audio = recognizer.listen(source)
+        try:
+            text = recognizer.recognize_google(audio).lower()
+            print(f"Heard: {text}")
+            if "gemini" in text:
+                print("Keyword 'Gemini' detected! Listening for command...")
+                command = listen_for_command()
+                if command:
+                    result = process_command(command)
+                    print(f"Command result: {result}")
+                    # You might want to add text-to-speech here to speak the result
+        except sr.UnknownValueError:
+            pass
+        except sr.RequestError as e:
+            print(f"Could not request results from Google Speech Recognition service; {e}")
 
 def start_application(app_name):
     app_path = get_app_path(app_name)
@@ -263,7 +287,7 @@ def listen_for_command():
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
         print("Listening for command...")
-        audio = recognizer.listen(source)
+        audio = recognizer.listen(source, timeout=5, phrase_time_limit=5)
     
     try:
         command = recognizer.recognize_google(audio)
@@ -275,6 +299,7 @@ def listen_for_command():
     except sr.RequestError as e:
         print(f"Could not request results from Google Speech Recognition service; {e}")
         return None
+
 
 @app.route('/command', methods=['POST'])
 def handle_command():
@@ -651,4 +676,6 @@ def extract_app_name(text):
     return None
 
 if __name__ == "__main__":
+    voice_thread = threading.Thread(target=listen_for_keyword, daemon=True)
+    voice_thread.start()
     app.run(port=5000, debug=True)
