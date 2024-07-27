@@ -1,0 +1,11 @@
+google-generativeai
+nltk
+sentence-transformers
+speechrecognition
+PyAudio
+pyttsx3
+fuzzywuzzy
+python-Levenshtein
+flask
+pywinauto
+psutil
