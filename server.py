@@ -2,6 +2,7 @@ import os
 import google.generativeai as genai
 import sys
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import speech_recognition as sr
 import pyttsx3
 import json
@@ -36,6 +37,8 @@ genai.configure(api_key=os.environ["API_KEY"])
 g_model = genai.GenerativeModel('gemini-1.5-pro')
 
 app = Flask(__name__)
+CORS(app)
+
 installer = AppInstaller()
 # Load datasets
 with open('app_name.json', 'r') as file:
@@ -118,7 +121,7 @@ def install_application(code):
         result = subprocess.run(f'powershell -Command "{code}"', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return result.stdout.decode()
     except subprocess.CalledProcessError as e:
-        return f"Failed to install application. Error: {e.stderr.decode()}"
+        return f"Failed to install application."
 
 def compute_similarity(user_input, items):
     user_input_embedding = model.encode([user_input])
@@ -152,7 +155,7 @@ def open_website_in_chrome(url):
             app = Application().start(f'"{chrome_path}" {url}')
             return f"Opened {url} in Google Chrome."
         except Exception as e:
-            return f"Failed to open website in Chrome. Error: {e}"
+            return f"Failed to open website in Chrome."
     else:
         return "Google Chrome not found."
     
@@ -169,6 +172,7 @@ def send_to_gemini(command, model):
     except Exception as e:
         print(f"Error sending command to Gemini: {e}")
         return None
+    
 def list_windows():
     def winEnumHandler(hwnd, ctx):
         if win32gui.IsWindowVisible(hwnd):
@@ -216,7 +220,7 @@ def close_window_function(partial_name):
                     win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
                     return f"Sent close command to window: {full_name}"
                 except Exception as e:
-                    return f"Error while trying to close window {full_name}: {str(e)}"
+                    return f"Error while trying to close window {full_name}"
             else:
                 return f"Found window in list, but couldn't interact with it: {full_name}"
         else:
@@ -280,6 +284,7 @@ def generate_and_save_code(user_input, model):
                 result = subprocess.run([sys.executable, file_path], capture_output=True, text=True, timeout=10)
                 print("Output:")
                 print(result.stdout)
+                result = f"Code: \n{generated_code} \nOutput: {result.stdout}"
                 if result.stderr:
                     print("Errors:")
                     print(result.stderr)
@@ -290,7 +295,7 @@ def generate_and_save_code(user_input, model):
         else:
             print(f"\nNote: Automatic execution is only supported for Python. The {language} code has been saved but not executed.")
         
-        return file_path
+        return result
     else:
         print("Failed to generate code.")
         return None
@@ -414,7 +419,7 @@ def process_command(command, max_retries=3):
                 logging.info(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{max_retries})")
                 time.sleep(5)
             else:
-                return f"An error occurred after {max_retries} attempts: {str(e)}"
+                return f"An error occurred after {max_retries} attempts"
             
 def interact_with_control(params):
     window_name = params.get("window_name")
@@ -447,7 +452,7 @@ def interact_with_control(params):
         return f"Successfully performed {action} on {control_type} '{control_name}' in {window_name}"
     except Exception as e:
         logging.error(f"Error in interact_with_control: {str(e)}")
-        return f"Error interacting with control: {str(e)}"
+        return f"Error interacting with control"
 
 def navigate_in_browser(browser_name, url, search_query=None):
     if not browser_name or not url:
@@ -459,7 +464,7 @@ def navigate_in_browser(browser_name, url, search_query=None):
         for window in windows:
             print(f"Window: {window}")
 
-        retries = 3
+        retries = 2
         for attempt in range(retries):
             try:
                 logging.info(f"Attempt {attempt + 1} to find and interact with {browser_name}")
@@ -514,7 +519,7 @@ def navigate_in_browser(browser_name, url, search_query=None):
         return f"Error navigating in browser: No windows for {browser_name} could be found after {retries} attempts"
     except Exception as e:
         logging.error(f"Error in navigate_in_browser: {str(e)}")
-        return f"Error navigating in browser: {str(e)}"
+        return f"Error navigating in browser"
 
 def get_current_file_explorer_path():
     try:
@@ -567,7 +572,7 @@ def file_explorer_operation(params):
             return f"Unknown file explorer operation: {operation}"
     except Exception as e:
         logging.error(f"Error in file_explorer_operation: {str(e)}")
-        return f"Error in file explorer operation: {str(e)}"
+        return f"Error in file explorer operation"
 
 def rename_files(explorer_window, params):
     file_pattern = params.get("file_pattern")
@@ -592,7 +597,7 @@ def rename_files(explorer_window, params):
         return f"Renamed files matching '{file_pattern}' to '{new_name}' in '{folder_path}'"
     except Exception as e:
         logging.error(f"Error in rename_files: {str(e)}")
-        return f"Error renaming files: {str(e)}"
+        return f"Error renaming files"
 
 def select_files(explorer_window, params):
     file_pattern = params.get("file_pattern")
@@ -609,7 +614,7 @@ def select_files(explorer_window, params):
         return f"Selected files matching '{file_pattern}'"
     except Exception as e:
         logging.error(f"Error in select_files: {str(e)}")
-        return f"Error selecting files: {str(e)}"
+        return f"Error selecting files"
 
 def navigate_to_folder(explorer_window, params):
     target_folder = params.get("target_folder")
@@ -629,7 +634,7 @@ def navigate_to_folder(explorer_window, params):
         return f"Navigated to folder: {target_folder}"
     except Exception as e:
         logging.error(f"Error in navigate_to_folder: {str(e)}")
-        return f"Error navigating to folder: {str(e)}"
+        return f"Error navigating to folder"
 
 def list_processes():
     processes = []
@@ -656,7 +661,7 @@ def get_detailed_process_info(pid):
         return f"PID: {pid}, Name: {process.name()}, Exe: {exe_path}, Status: {process.status()}"
     except Exception as e:
         logging.error(f"Error in get_detailed_process_info: {str(e)}")
-        return f"Error getting process info for PID {pid}: {str(e)}"
+        return f"Error getting process info for PID {pid}"
     
 
 def execute_ui_action(action, params):
@@ -705,7 +710,30 @@ def extract_app_name(text):
         return close_match.group(1)
     return None
 
+@app.route('/recognize', methods=['POST'])
+def recognize():
+    if 'audio' not in request.files:
+        return jsonify({'error': 'No audio file provided'}), 400
+
+    audio_file = request.files['audio']
+    audio_path = 'uploaded_audio.wav'
+    audio_file.save(audio_path)
+
+    recognizer = sr.Recognizer()
+    try:
+        with sr.AudioFile(audio_path) as source:
+            audio = recognizer.record(source)
+            recognized_text = recognizer.recognize_google(audio)
+            os.remove(audio_path)
+            return jsonify({'recognizedText': recognized_text}), 200
+    except sr.UnknownValueError:
+        os.remove(audio_path)
+        return jsonify({'error': 'Could not understand audio'}), 400
+    except sr.RequestError:
+        os.remove(audio_path)
+        return jsonify({'error': 'Could not request results from Google Speech Recognition service'}), 500
+
 if __name__ == "__main__":
-    voice_thread = threading.Thread(target=listen_for_keyword, daemon=True)
-    voice_thread.start()
+    # voice_thread = threading.Thread(target=listen_for_keyword, daemon=True)
+    # voice_thread.start()
     app.run(port=5000, debug=True)
