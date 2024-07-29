@@ -1,6 +1,10 @@
-python
-def add_numbers(num1, num2):
-  return num1 + num2
+def fibonacci(n):
+  if n <= 1:
+    return n
+  else:
+    return fibonacci(n-1) + fibonacci(n-2)
 
-sum = add_numbers(5, 7)
-print(sum)
+nterms = 10
+
+for i in range(nterms):
+  print(fibonacci(i))

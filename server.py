@@ -1,7 +1,11 @@
 import os
 import google.generativeai as genai
+from AppOpener import open as app_open
+from fuzzywuzzy import process
+import winapps
 import sys
 from flask import Flask, request, jsonify
+import queue
 from flask_cors import CORS
 import speech_recognition as sr
 import pyttsx3
@@ -35,10 +39,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 os.environ["API_KEY"] = "AIzaSyDsTNYvMqYM-LAGUd8fB12rWzVixDsU914"
 genai.configure(api_key=os.environ["API_KEY"])
 g_model = genai.GenerativeModel('gemini-1.5-pro')
-
+status_queue = queue.Queue()
 app = Flask(__name__)
 CORS(app)
-
+status_lock = threading.Lock()
+latest_status = "No updates"
+# Event to signal when new status is available
+status_event = threading.Event()
 installer = AppInstaller()
 # Load datasets
 with open('app_name.json', 'r') as file:
@@ -81,6 +88,7 @@ def get_app_path(app_name):
     return None
 
 def listen_for_keyword():
+    global latest_status
     recognizer = sr.Recognizer()
     while True:
         with sr.Microphone() as source:
@@ -91,30 +99,73 @@ def listen_for_keyword():
             print(f"Heard: {text}")
             if "gemini" in text:
                 print("Keyword 'Gemini' detected! Listening for command...")
+                with status_lock:
+                    latest_status = "Listening for command..."
+                status_event.set()
                 command = listen_for_command()
                 if command:
                     result = process_command(command)
                     print(f"Command result: {result}")
-                    # You might want to add text-to-speech here to speak the result
+                    with status_lock:
+                        latest_status = f"Command result: {result}"
+                    status_event.set()  # Signal that new status is available
         except sr.UnknownValueError:
-            pass
+            with status_lock:
+                latest_status = "Could not understand audio"
+            status_event.set()
         except sr.RequestError as e:
             print(f"Could not request results from Google Speech Recognition service; {e}")
+            with status_lock:
+                latest_status = f"Error: {e}"
+            status_event.set()
 
 def start_application(app_name):
-    app_path = get_app_path(app_name)
-    if app_path:
-        try:
-            app = Application().start(app_path)
-            return f"{app_name} started successfully."
-        except Exception as e:
-            return f"Failed to start {app_name}. Error: {e}"       
-    else:
-        try:
-            app = Application().start(f"{app_name}")
-            return f"{app_name} started successfully."
-        except Exception as e:
-            return f"Failed to start {app_name}."
+    def get_installed_apps():
+        apps = list(winapps.list_installed())
+        app_names = [app.name for app in apps]
+        return app_names
+
+    def suggest_apps(app_name, app_names, threshold=70):
+        suggestions = process.extract(app_name, app_names, limit=5)
+        return [suggestion for suggestion, score in suggestions if score >= threshold]
+
+    def open_app(app_names):
+        installed_apps = get_installed_apps()
+        
+        for app_name in app_names:
+            try:
+                app_open(app_name, match_closest=True)
+                print(f"Opening {app_name}...")
+            except Exception as e:
+                print(f"appopener failed to open {app_name}: {e}")
+                suggestions = suggest_apps(app_name, installed_apps)
+                
+                if suggestions:
+                    print(f"Application '{app_name}' not found. Did you mean one of these?")
+                    for suggestion in suggestions:
+                        print(f" - {suggestion}")
+                    suggested_name = suggestions[0]
+                    user_confirmation = input(f"Do you want to open '{suggested_name}' instead? (yes/no): ").strip().lower()
+                    if user_confirmation == 'yes':
+                        open_app([suggested_name])
+                else:
+                    print("Attempting to open the app using winapps...")
+                    app = list(winapps.search_installed(app_name))
+
+                    if app:
+                        app_info = app[0]
+                        uninstall_string = app_info.uninstall_string
+
+                        try:
+                            subprocess.Popen(uninstall_string)
+                            print(f"Opening {app_info.name} using uninstall string...")
+                        except Exception as e:
+                            print(f"Error opening {app_info.name} using uninstall string: {e}")
+                    else:
+                        print(f"Application '{app_name}' not found. Please make sure the name is correct.")
+
+    open_app([app_name])
+    return f"Attempted to open {app_name}"        
 
 def install_application(code):
     try:
@@ -710,30 +761,30 @@ def extract_app_name(text):
         return close_match.group(1)
     return None
 
-@app.route('/recognize', methods=['POST'])
-def recognize():
-    if 'audio' not in request.files:
-        return jsonify({'error': 'No audio file provided'}), 400
+@app.route('/status', methods=['GET'])
+def get_status():
+    global latest_status
+    timeout = 3  # Time to wait for new status (in seconds)
+    status_event.wait(timeout)  # Wait for new status or timeout
+    status_event.clear()  # Reset the event
+    print(latest_status)
+    return jsonify({"status": latest_status})
 
-    audio_file = request.files['audio']
-    audio_path = 'uploaded_audio.wav'
-    audio_file.save(audio_path)
-
-    recognizer = sr.Recognizer()
-    try:
-        with sr.AudioFile(audio_path) as source:
-            audio = recognizer.record(source)
-            recognized_text = recognizer.recognize_google(audio)
-            os.remove(audio_path)
-            return jsonify({'recognizedText': recognized_text}), 200
-    except sr.UnknownValueError:
-        os.remove(audio_path)
-        return jsonify({'error': 'Could not understand audio'}), 400
-    except sr.RequestError:
-        os.remove(audio_path)
-        return jsonify({'error': 'Could not request results from Google Speech Recognition service'}), 500
+def run_flask():
+    app.run(port=5000, debug=True, use_reloader=False, threaded=True)
 
 if __name__ == "__main__":
-    # voice_thread = threading.Thread(target=listen_for_keyword, daemon=True)
-    # voice_thread.start()
-    app.run(port=5000, debug=True)
+    # Start the voice recognition thread
+    voice_thread = threading.Thread(target=listen_for_keyword, daemon=True)
+    voice_thread.start()
+
+    # Start the Flask server in a separate thread
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+
+    # Keep the main thread alive
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Shutting down...")
