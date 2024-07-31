@@ -31,8 +31,9 @@ from installer.app_install import AppInstaller
 import threading
 import time
 import tkinter as tk
-from tkinter import filedialog,simpledialog
-#sab changa si
+from tkinter import filedialog, simpledialog
+
+# sab changa si
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -82,13 +83,16 @@ def get_app_path(app_name):
             key_2 = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon")
             explorer_path, _ = winreg.QueryValueEx(key_2, "Shell")
             return os.path.normpath(explorer_path)
-        
+
     except WindowsError as e:
         print(f"Failed to get {app_name} path. Error: {e}")
     return None
 
+is_processing_command = False
+last_command_time = 0
+debounce_interval = 5  # Time interval in seconds to debounce commands
 def listen_for_keyword():
-    global latest_status
+    global latest_status, is_processing_command, last_command_time
     recognizer = sr.Recognizer()
     while True:
         with sr.Microphone() as source:
@@ -97,21 +101,37 @@ def listen_for_keyword():
         try:
             text = recognizer.recognize_google(audio).lower()
             print(f"Heard: {text}")
-            if "gemini" in text:
-                print("Keyword 'Gemini' detected! Listening for command...")
-                with status_lock:
-                    latest_status = "Listening for command..."
-                status_event.set()
-                command = listen_for_command()
-                if command:
-                    result = process_command(command)
-                    print(f"Command result: {result}")
+            if "gemini" in text and not is_processing_command:
+                current_time = time.time()
+                if current_time - last_command_time >= debounce_interval:
+                    print("Keyword 'Gemini' detected! Listening for command...")
+                    is_processing_command = True
                     with status_lock:
-                        latest_status = json.dumps({
-                            "command": command,
-                            "response": result
-                        })
-                    status_event.set()  # Signal that new status is available
+                        latest_status = "Listening for command..."
+                    status_event.set()
+                    
+                    # Set a 5-second timeout for listening to the command
+                    command = listen_for_command(timeout=5)
+                    
+                    if command:
+                        result = process_command(command)
+                        print(f"Command result: {result}")
+                        with status_lock:
+                            latest_status = json.dumps({
+                                "command": command,
+                                "response": result
+                            })
+                        status_event.set()  # Signal that new status is available
+                    else:
+                        print("No command received within 5 seconds.")
+                        with status_lock:
+                            latest_status = "No command received"
+                        status_event.set()
+                    
+                    last_command_time = time.time()
+                    is_processing_command = False
+                else:
+                    print("Command debounced. Waiting for debounce interval to pass.")
         except sr.UnknownValueError:
             with status_lock:
                 latest_status = "Could not understand audio"
@@ -121,6 +141,26 @@ def listen_for_keyword():
             with status_lock:
                 latest_status = f"Error: {e}"
             status_event.set()
+
+
+def listen_for_command(timeout=5):
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print(f"Listening for command for {timeout} seconds...")
+        try:
+            audio = recognizer.listen(source, timeout=timeout)
+            command = recognizer.recognize_google(audio)
+            print(f"Recognized command: {command}")
+            return command
+        except sr.WaitTimeoutError:
+            print("Listening timed out")
+            return None
+        except sr.UnknownValueError:
+            print("Could not understand audio")
+            return None
+        except sr.RequestError as e:
+            print(f"Could not request results from Google Speech Recognition service; {e}")
+            return None
 
 def start_application(app_name):
     def get_installed_apps():
@@ -134,7 +174,7 @@ def start_application(app_name):
 
     def open_app(app_names):
         installed_apps = get_installed_apps()
-        
+
         for app_name in app_names:
             try:
                 app_open(app_name, match_closest=True)
@@ -142,7 +182,7 @@ def start_application(app_name):
             except Exception as e:
                 print(f"appopener failed to open {app_name}: {e}")
                 suggestions = suggest_apps(app_name, installed_apps)
-                
+
                 if suggestions:
                     print(f"Application '{app_name}' not found. Did you mean one of these?")
                     for suggestion in suggestions:
@@ -168,7 +208,7 @@ def start_application(app_name):
                         print(f"Application '{app_name}' not found. Please make sure the name is correct.")
 
     open_app([app_name])
-    return f"Attempted to open {app_name}"        
+    return f"Attempted to open {app_name}"
 
 def install_application(code):
     try:
@@ -212,7 +252,7 @@ def open_website_in_chrome(url):
             return f"Failed to open website in Chrome."
     else:
         return "Google Chrome not found."
-    
+
 def send_to_gemini(command, model):
     try:
         response = model.generate_content(command)
@@ -226,7 +266,7 @@ def send_to_gemini(command, model):
     except Exception as e:
         print(f"Error sending command to Gemini: {e}")
         return None
-    
+
 def list_windows():
     def winEnumHandler(hwnd, ctx):
         if win32gui.IsWindowVisible(hwnd):
@@ -257,7 +297,7 @@ def close_window_function(partial_name):
             full_name = matching_windows[0]
             title = full_name.split(" (Process: ")[0]
             process_name = full_name.split("(Process: ")[1][:-1]  # Remove the last ')'
-            
+
             def enum_windows_callback(hwnd, result):
                 if win32gui.IsWindowVisible(hwnd) and title.lower() in win32gui.GetWindowText(hwnd).lower():
                     _, pid = win32process.GetWindowThreadProcessId(hwnd)
@@ -267,7 +307,7 @@ def close_window_function(partial_name):
 
             result = []
             win32gui.EnumWindows(enum_windows_callback, result)
-            
+
             if result:
                 hwnd = result[0]
                 try:
@@ -284,32 +324,32 @@ def close_window_function(partial_name):
 
 def generate_and_save_code(user_input, model):
     language = extract_language(user_input)
-    
+
     prompt = f"Generate {language} code for: {user_input}. Provide only the code, without explanations."
     generated_code = send_to_gemini(prompt, model)
-    
+
     if generated_code:
         extension = get_file_extension(language)
-        
+
         # Remove any potential markdown code block syntax
         generated_code = generated_code.strip('`')
         if generated_code.startswith(language):
             generated_code = generated_code[len(language):].strip()
-        
+
         # Create a root window
         root = tk.Tk()
         root.withdraw()  # Hide the main window
-        
+
         # Ask for file name
-        file_name = simpledialog.askstring("File Name", f"Enter a name for the {language} file:", 
+        file_name = simpledialog.askstring("File Name", f"Enter a name for the {language} file:",
                                            initialvalue=f"generated_code{extension}")
         if file_name is None:  # User cancelled
             print("File save cancelled.")
             return None
-        
+
         if not file_name.endswith(extension):
             file_name += extension
-        
+
         # Ask for save location
         file_path = filedialog.asksaveasfilename(
             defaultextension=extension,
@@ -317,11 +357,11 @@ def generate_and_save_code(user_input, model):
             title="Save Generated Code",
             initialfile=file_name
         )
-        
+
         if not file_path:  # User cancelled
             print("File save cancelled.")
             return None
-        
+
         try:
             with open(file_path, 'w') as file:
                 file.write(generated_code)
@@ -329,7 +369,7 @@ def generate_and_save_code(user_input, model):
         except IOError as e:
             print(f"Error saving file: {e}")
             return None
-        
+
         # Execute the code if it's Python
         if language.lower() == 'python':
             print("\nExecuting the generated Python code:")
@@ -348,7 +388,7 @@ def generate_and_save_code(user_input, model):
                 print(f"An error occurred while executing the code: {e}")
         else:
             print(f"\nNote: Automatic execution is only supported for Python. The {language} code has been saved but not executed.")
-        
+
         return result
     else:
         print("Failed to generate code.")
@@ -372,43 +412,7 @@ def get_file_extension(language):
     }
     return extensions.get(language, '.txt')
 
-def listen_for_command():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        print("Listening for command...")
-        audio = recognizer.listen(source, timeout=5, phrase_time_limit=5)
-    
-    try:
-        command = recognizer.recognize_google(audio)
-        print(f"Recognized command: {command}")
-        return command
-    except sr.UnknownValueError:
-        print("Could not understand audio")
-        return None
-    except sr.RequestError as e:
-        print(f"Could not request results from Google Speech Recognition service; {e}")
-        return None
-
-
-@app.route('/command', methods=['POST'])
-def handle_command():
-    data = request.json
-    user_input = data.get('command')
-    print(user_input)
-
-    if user_input.lower() == "mic":
-        # Activate speech recognition
-        spoken_command = listen_for_command()
-        if spoken_command:
-            # Process the spoken command
-            return process_command(spoken_command)
-        else:
-            return jsonify({'result': "Failed to recognize speech command."})
-    else:
-        # Process the text command as before
-        return process_command(user_input)
-
-def process_command(command, max_retries=3):
+def process_command(command, max_retries=1):
     if not command.strip():
         return "Empty command. Please provide a valid command."
 
@@ -444,37 +448,32 @@ def process_command(command, max_retries=3):
     {{"action": "no_action", "response": "Hello! How can I assist you with UI automation today?"}}
     """
 
-    for attempt in range(max_retries):
-        try:
-            response = g_model.generate_content(prompt)
-            print(response)
-            json_match = re.search(r'```json\s*(.*?)\s*```', response.text, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-            else:
-                json_str = response.text
+    try:
+        response = g_model.generate_content(prompt)
+        print(response)
+        json_match = re.search(r'```json\s*(.*?)\s*```', response.text, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            json_str = response.text
 
-            action_data = json.loads(json_str)
+        action_data = json.loads(json_str)
 
-            if not isinstance(action_data, dict):
-                raise ValueError(f"Invalid response format. Expected a dictionary, got: {type(action_data)}")
+        if not isinstance(action_data, dict):
+            raise ValueError(f"Invalid response format. Expected a dictionary, got: {type(action_data)}")
 
-            if "action" not in action_data:
-                raise ValueError(f"Invalid response from AI model. Missing 'action' key. Response: {action_data}")
+        if "action" not in action_data:
+            raise ValueError(f"Invalid response from AI model. Missing 'action' key. Response: {action_data}")
 
-            if action_data["action"] == "no_action":
-                return action_data.get("response", "No action needed")
+        if action_data["action"] == "no_action":
+            return action_data.get("response", "No action needed")
 
-            result = execute_ui_action(action_data["action"], action_data.get("params", {}))
-            return result
-        except Exception as e:
-            logging.error(f"Error in process_command: {str(e)}")
-            if attempt < max_retries - 1:
-                logging.info(f"Retrying in 5 seconds... (Attempt {attempt + 1}/{max_retries})")
-                time.sleep(5)
-            else:
-                return f"An error occurred after {max_retries} attempts"
-            
+        result = execute_ui_action(action_data["action"], action_data.get("params", {}))
+        return result
+    except Exception as e:
+        logging.error(f"Error in process_command: {str(e)}")
+        return f"An error occurred"
+
 def interact_with_control(params):
     window_name = params.get("window_name")
     control_type = params.get("control_type")
@@ -518,59 +517,49 @@ def navigate_in_browser(browser_name, url, search_query=None):
         for window in windows:
             print(f"Window: {window}")
 
-        retries = 2
-        for attempt in range(retries):
-            try:
-                logging.info(f"Attempt {attempt + 1} to find and interact with {browser_name}")
-                app = Application(backend="uia").connect(title_re=f".*{browser_name}.*", found_index=0, timeout=10)
-                all_windows = app.windows()
+        app = Application(backend="uia").connect(title_re=f".*{browser_name}.*", found_index=0, timeout=10)
+        all_windows = app.windows()
 
-                # Try to find the main browser window
-                browser_window = None
-                for win in all_windows:
-                    win_title = win.window_text().lower()
-                    logging.info(f"Checking window: {win.window_text()}")
-                    if browser_name.lower() in win_title:
-                        browser_window = win
-                        break
+        # Try to find the main browser window
+        browser_window = None
+        for win in all_windows:
+            win_title = win.window_text().lower()
+            logging.info(f"Checking window: {win.window_text()}")
+            if browser_name.lower() in win_title:
+                browser_window = win
+                break
 
-                if not browser_window:
-                    raise Exception("No suitable browser window found")
+        if not browser_window:
+            raise Exception("No suitable browser window found")
 
-                logging.info(f"Connected to {browser_name} window: {browser_window.window_text()}")
+        logging.info(f"Connected to {browser_name} window: {browser_window.window_text()}")
 
-                # Open a new tab first
-                browser_window.set_focus()
-                send_keys('^t')  # Ctrl+T to open a new tab
-                time.sleep(1)  # Wait for the new tab to open
+        # Open a new tab first
+        browser_window.set_focus()
+        send_keys('^t')  # Ctrl+T to open a new tab
+        time.sleep(1)  # Wait for the new tab to open
 
-                # Navigate to Google if the search query is provided
-                if search_query:
-                    send_keys('^l')  # Ctrl+L to focus on the address bar
-                    time.sleep(0.5)
-                    send_keys('^a')  # Select all existing text
-                    send_keys('{BACKSPACE}')  # Clear the address bar
-                    send_keys('https://www.google.com{ENTER}')
-                    time.sleep(2)  # Wait for Google to load
+        # Navigate to Google if the search query is provided
+        if search_query:
+            send_keys('^l')  # Ctrl+L to focus on the address bar
+            time.sleep(0.5)
+            send_keys('^a')  # Select all existing text
+            send_keys('{BACKSPACE}')  # Clear the address bar
+            send_keys('https://www.google.com{ENTER}')
+            time.sleep(2)  # Wait for Google to load
 
-                    # Simulate typing the search query and pressing Enter
-                    send_keys(search_query + '{ENTER}')
-                else:
-                    # If no search query is provided, just navigate to the URL
-                    send_keys('^l')  # Ctrl+L to focus on the address bar
-                    time.sleep(0.5)
-                    send_keys('^a')  # Select all existing text
-                    send_keys('{BACKSPACE}')  # Clear the address bar
-                    send_keys(url + '{ENTER}')
-                    time.sleep(2)  # Wait for the page to load
+            # Simulate typing the search query and pressing Enter
+            send_keys(search_query + '{ENTER}')
+        else:
+            # If no search query is provided, just navigate to the URL
+            send_keys('^l')  # Ctrl+L to focus on the address bar
+            time.sleep(0.5)
+            send_keys('^a')  # Select all existing text
+            send_keys('{BACKSPACE}')  # Clear the address bar
+            send_keys(url + '{ENTER}')
+            time.sleep(2)  # Wait for the page to load
 
-                return f"Opened a new tab and navigated to {url} in {browser_name}"
-            except Exception as e:
-                logging.error(f"Error in navigate_in_browser attempt {attempt + 1}: {str(e)}")
-                if attempt < retries - 1:
-                    time.sleep(2)  # Wait before retrying
-
-        return f"Error navigating in browser: No windows for {browser_name} could be found after {retries} attempts"
+        return f"Opened a new tab and navigated to {url} in {browser_name}"
     except Exception as e:
         logging.error(f"Error in navigate_in_browser: {str(e)}")
         return f"Error navigating in browser"
@@ -716,7 +705,6 @@ def get_detailed_process_info(pid):
     except Exception as e:
         logging.error(f"Error in get_detailed_process_info: {str(e)}")
         return f"Error getting process info for PID {pid}"
-    
 
 def execute_ui_action(action, params):
     try:

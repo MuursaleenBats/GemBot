@@ -22,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showWelcomeMessage = true;
   bool _isListening = false;
   Timer? _statusCheckTimer;
+  Timer? _listeningTimer;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _statusCheckTimer?.cancel();
+    _listeningTimer?.cancel();
     super.dispose();
   }
 
@@ -41,26 +43,34 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
- Future<void> _checkStatus() async {
-  final response = await http.get(Uri.parse('http://localhost:5000/status'));
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    if (data.containsKey('command') && data.containsKey('response')) {
-      setState(() {
-        _chatMessages.add({
-          'prompt': data['command'],
-          'response': data['response']
+  Future<void> _checkStatus() async {
+    final response = await http.get(Uri.parse('http://localhost:5000/status'));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data.containsKey('command') && data.containsKey('response')) {
+        setState(() {
+          if (!_chatMessages.any((message) => message['prompt'] == data['command'])) {
+            _chatMessages.add({
+              'prompt': data['command'],
+              'response': data['response']
+            });
+          }
+          _isListening = false;
+          _showWelcomeMessage = false;
         });
-        _isListening = false;
-        _showWelcomeMessage = false;
-      });
-    } else if (data['status'] == "Listening for command...") {
-      setState(() {
-        _isListening = true;
-      });
+      } else if (data['status'] == "Listening for command...") {
+        setState(() {
+          _isListening = true;
+          _listeningTimer?.cancel();
+          _listeningTimer = Timer(Duration(seconds: 5), () {
+            setState(() {
+              _isListening = false;
+            });
+          });
+        });
+      }
     }
   }
-}
 
   Future<void> _sendCommand(String command) async {
     print("Send Command");
@@ -78,10 +88,14 @@ class _HomeScreenState extends State<HomeScreen> {
       print('Response data: ${response.body}');
       setState(() {
         if (command == "mic") {
-          _chatMessages.add(
-              {'prompt': "Listening for command", 'response': response.body});
+          if (!_chatMessages.any((message) => message['prompt'] == "Listening for command")) {
+            _chatMessages.add(
+                {'prompt': "Listening for command", 'response': response.body});
+          }
         } else {
-          _chatMessages.add({'prompt': command, 'response': response.body});
+          if (!_chatMessages.any((message) => message['prompt'] == command)) {
+            _chatMessages.add({'prompt': command, 'response': response.body});
+          }
         }
         _showWelcomeMessage = false;
       });
