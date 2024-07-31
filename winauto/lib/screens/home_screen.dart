@@ -41,27 +41,26 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _checkStatus() async {
-    final response = await http.get(Uri.parse('http://localhost:5000/status'));
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['status'] == "Listening for command...") {
-        setState(() {
-          _isListening = true;
+ Future<void> _checkStatus() async {
+  final response = await http.get(Uri.parse('http://localhost:5000/status'));
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    if (data.containsKey('command') && data.containsKey('response')) {
+      setState(() {
+        _chatMessages.add({
+          'prompt': data['command'],
+          'response': data['response']
         });
-        _sendCommand("mic");
-        _startListeningTimer();
-      }
+        _isListening = false;
+        _showWelcomeMessage = false;
+      });
+    } else if (data['status'] == "Listening for command...") {
+      setState(() {
+        _isListening = true;
+      });
     }
   }
-
-  void _startListeningTimer() {
-    Future.delayed(Duration(seconds: 3), () {
-      setState(() {
-        _isListening = false;
-      });
-    });
-  }
+}
 
   Future<void> _sendCommand(String command) async {
     print("Send Command");
