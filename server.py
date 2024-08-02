@@ -1,5 +1,7 @@
 import os
 import google.generativeai as genai
+from pptx import Presentation
+from pptx.util import Inches, Pt
 from AppOpener import open as app_open
 from fuzzywuzzy import process
 import winapps
@@ -32,13 +34,14 @@ import threading
 import time
 import tkinter as tk
 from tkinter import filedialog, simpledialog
-
-# sab changa si
+from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-os.environ["API_KEY"] = "AIzaSyDsTNYvMqYM-LAGUd8fB12rWzVixDsU914"
-genai.configure(api_key=os.environ["API_KEY"])
+load_dotenv()
+api_key = os.getenv("API_KEY")
+genai.configure(api_key=api_key)
+
 g_model = genai.GenerativeModel('gemini-1.5-pro')
 status_queue = queue.Queue()
 app = Flask(__name__)
@@ -412,6 +415,138 @@ def get_file_extension(language):
     }
     return extensions.get(language, '.txt')
 
+def generate_powerpoint(title):
+    prompt = f"""
+    Given the user command: "Generate a PowerPoint presentation with the title '{title}'"
+    Generate a JSON response with the appropriate parameters for creating the PowerPoint presentation.
+    The JSON response should include the following fields:
+    - "title": The title of the presentation
+    - "subtitle": The subtitle of the presentation
+    - "agenda_items": An array of at least 5 agenda items for the presentation, each with a 2-line description
+    - "filename": The filename for the PowerPoint file
+
+    Example response format:
+    {{
+        "title": "Automated Presentation",
+        "subtitle": "Created using python-pptx",
+        "agenda_items": [
+            {{
+                "item": "Introduction",
+                "description": "This slide introduces the topic. It provides an overview of what will be covered."
+            }},
+            {{
+                "item": "Main Topic 1",
+                "description": "This slide covers the first main topic. It discusses key points and relevant information."
+            }},
+            {{
+                "item": "Main Topic 2",
+                "description": "This slide covers the second main topic. It provides additional details and insights."
+            }},
+            {{
+                "item": "Main Topic 3",
+                "description": "This slide covers the third main topic. It includes important facts and data."
+            }},
+            {{
+                "item": "Conclusion",
+                "description": "This slide summarizes the main points. It provides a final overview and closing remarks."
+            }}
+        ],
+        "filename": "automated_presentation.pptx"
+    }}
+    """
+
+    try:
+        response = g_model.generate_content(prompt)
+        print(response)
+        json_match = re.search(r'```json\s*(.*?)\s*```', response.text, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            json_str = response.text
+
+        action_data = json.loads(json_str)
+
+        if not isinstance(action_data, dict):
+            raise ValueError(f"Invalid response format. Expected a dictionary, got: {type(action_data)}")
+
+        title = action_data.get("title", "Automated Presentation")
+        subtitle = action_data.get("subtitle", "Created using python-pptx")
+        agenda_items = action_data.get("agenda_items", [
+            {"item": "Introduction", "description": "This slide introduces the topic. It provides an overview of what will be covered."},
+            {"item": "Main Topic 1", "description": "This slide covers the first main topic. It discusses key points and relevant information."},
+            {"item": "Main Topic 2", "description": "This slide covers the second main topic. It provides additional details and insights."},
+            {"item": "Main Topic 3", "description": "This slide covers the third main topic. It includes important facts and data."},
+            {"item": "Conclusion", "description": "This slide summarizes the main points. It provides a final overview and closing remarks."}
+        ])
+        filename = action_data.get("filename", "automated_presentation.pptx")
+
+        prs = Presentation()
+
+        # Add a title slide
+        title_slide_layout = prs.slide_layouts[0]
+        slide = prs.slides.add_slide(title_slide_layout)
+        title_shape = slide.shapes.title
+        subtitle_shape = slide.placeholders[1]
+
+        title_shape.text = title
+        subtitle_shape.text = subtitle
+
+        # Add a content slide for the agenda
+        bullet_slide_layout = prs.slide_layouts[1]
+        slide = prs.slides.add_slide(bullet_slide_layout)
+        shapes = slide.shapes
+
+        title_shape = shapes.title
+        body_shape = shapes.placeholders[1]
+
+        title_shape.text = "Agenda"
+
+        tf = body_shape.text_frame
+        tf.text = ""  # Clear any existing text
+
+        for item in agenda_items:
+            p = tf.add_paragraph()
+            p.text = item["item"]
+            p.level = 1
+
+        # Add a separate slide for each agenda item with description
+        for item in agenda_items:
+            slide = prs.slides.add_slide(bullet_slide_layout)
+            shapes = slide.shapes
+
+            title_shape = shapes.title
+            body_shape = shapes.placeholders[1]
+
+            title_shape.text = item["item"]
+
+            tf = body_shape.text_frame
+            tf.text = item["description"]
+
+        # Save the presentation
+        prs.save(filename)
+        return f"PowerPoint presentation generated successfully and saved as {filename}."
+    except Exception as e:
+        print(f"Error in generate_powerpoint: {str(e)}")
+        return f"An error occurred while generating the PowerPoint presentation."
+
+@app.route('/command', methods=['POST'])
+def handle_command():
+    data = request.json
+    user_input = data.get('command')
+    print(user_input)
+
+    if user_input.lower() == "mic":
+        # Activate speech recognition
+        spoken_command = listen_for_command()
+        if spoken_command:
+            # Process the spoken command
+            return process_command(spoken_command)
+        else:
+            return jsonify({'result': "Failed to recognize speech command."})
+    else:
+        # Process the text command as before
+        return process_command(user_input)
+
 def process_command(command, max_retries=1):
     if not command.strip():
         return "Empty command. Please provide a valid command."
@@ -431,7 +566,8 @@ def process_command(command, max_retries=1):
     9. start_application: Requires an "app_name" parameter
     10. install_application: Requires an "app_name" parameter
     11. generate_and_save_code: Requires a "language" and "code_description" parameter
-    12. no_action: Use this if no UI action is needed
+    12. generate_powerpoint: Requires "title"
+    13. no_action: Use this if no UI action is needed
 
     Example response formats:
     {{"action": "close_window", "params": {{"window_name": "Firefox"}}}}
@@ -445,6 +581,7 @@ def process_command(command, max_retries=1):
     {{"action": "start_application", "params": {{"app_name": "winword.exe"}}}}
     {{"action": "install_application", "params": {{"app_name": "Chrome"}}}}
     {{"action": "generate_and_save_code", "params": {{"language": "python", "code_description": "A function to calculate fibonacci numbers"}}}}
+    {{"action": "generate_powerpoint", "params": {{"title": "Automated Presentation"}}}}
     {{"action": "no_action", "response": "Hello! How can I assist you with UI automation today?"}}
     """
 
@@ -471,7 +608,7 @@ def process_command(command, max_retries=1):
         result = execute_ui_action(action_data["action"], action_data.get("params", {}))
         return result
     except Exception as e:
-        logging.error(f"Error in process_command: {str(e)}")
+        print(f"Error in process_command: {str(e)}")
         return f"An error occurred"
 
 def interact_with_control(params):
@@ -728,10 +865,13 @@ def execute_ui_action(action, params):
             return installer.install_app(params.get("app_name"))
         elif action == "generate_and_save_code":
             return generate_and_save_code(params.get("language") + params.get("code_description"), g_model)
+        elif action == "generate_powerpoint":
+            return generate_powerpoint(params.get("title"))
         else:
             return f"Unknown action: {action}"
     except Exception as e:
         logging.error(f"Error in execute_ui_action: {str(e)}")
+
 
 def extract_url(text):
     url_pattern = re.compile(r"[a-zA-Z0-9.-]+\.(com|org|net|edu|gov)")
