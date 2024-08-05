@@ -32,11 +32,15 @@ import threading
 import time
 import tkinter as tk
 from tkinter import filedialog, simpledialog
+from docx import Document
+from docx.shared import Pt
+from pptx import Presentation
+from pptx.util import Inches, Pt
 
 # sab changa si
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
+tk_queue = queue.Queue()
 os.environ["API_KEY"] = "AIzaSyDsTNYvMqYM-LAGUd8fB12rWzVixDsU914"
 genai.configure(api_key=os.environ["API_KEY"])
 g_model = genai.GenerativeModel('gemini-1.5-pro')
@@ -66,6 +70,18 @@ functions = {
 
 model = SentenceTransformer('all-MiniLM-L6-v2')  # Load the model once
 
+global is_blind_mode
+is_blind_mode = False
+
+def process_tk_queue():
+    while True:
+        try:
+            func, args, kwargs = tk_queue.get(timeout=1)
+            func(*args, **kwargs)
+            tk_queue.task_done()
+        except queue.Empty:
+            break
+
 def get_app_path(app_name):
     try:
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths")
@@ -91,26 +107,33 @@ def get_app_path(app_name):
 is_processing_command = False
 last_command_time = 0
 debounce_interval = 5  # Time interval in seconds to debounce commands
+
 def listen_for_keyword():
-    global latest_status, is_processing_command, last_command_time
+    global latest_status, is_processing_command, last_command_time, is_blind_mode
     recognizer = sr.Recognizer()
     while True:
         with sr.Microphone() as source:
+            if is_blind_mode:
+                speak_text("Listening for 'Gemini'...")
             print("Listening for 'Gemini'...")
             audio = recognizer.listen(source)
         try:
             text = recognizer.recognize_google(audio).lower()
             print(f"Heard: {text}")
+            if is_blind_mode:
+                speak_text(f"Heard: {text}")
             if "gemini" in text and not is_processing_command:
                 current_time = time.time()
                 if current_time - last_command_time >= debounce_interval:
-                    print("Keyword 'Gemini' detected! Listening for command...")
+                    message = "Keyword 'Gemini' detected! Listening for command..."
+                    if is_blind_mode:
+                        speak_text(message)
+                    print(message)
                     is_processing_command = True
                     with status_lock:
                         latest_status = "Listening for command..."
                     status_event.set()
                     
-                    # Set a 5-second timeout for listening to the command
                     command = listen_for_command(timeout=5)
                     
                     if command:
@@ -121,9 +144,12 @@ def listen_for_keyword():
                                 "command": command,
                                 "response": result
                             })
-                        status_event.set()  # Signal that new status is available
+                        status_event.set()
                     else:
-                        print("No command received within 5 seconds.")
+                        message = "No command received within 5 seconds."
+                        if is_blind_mode:
+                            speak_text(message)
+                        print(message)
                         with status_lock:
                             latest_status = "No command received"
                         status_event.set()
@@ -131,37 +157,61 @@ def listen_for_keyword():
                     last_command_time = time.time()
                     is_processing_command = False
                 else:
-                    print("Command debounced. Waiting for debounce interval to pass.")
+                    message = "Command debounced. Waiting for debounce interval to pass."
+                    if is_blind_mode:
+                        speak_text(message)
+                    print(message)
         except sr.UnknownValueError:
             with status_lock:
                 latest_status = "Could not understand audio"
             status_event.set()
         except sr.RequestError as e:
-            print(f"Could not request results from Google Speech Recognition service; {e}")
+            message = f"Could not request results from Google Speech Recognition service; {e}"
+            if is_blind_mode:
+                speak_text(message)
+            print(message)
             with status_lock:
                 latest_status = f"Error: {e}"
             status_event.set()
 
+def speak_text(text):
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
 
 def listen_for_command(timeout=5):
+    global is_blind_mode
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
+        if is_blind_mode:
+            speak_text(f"Listening for command for {timeout} seconds...")
         print(f"Listening for command for {timeout} seconds...")
         try:
             audio = recognizer.listen(source, timeout=timeout)
             command = recognizer.recognize_google(audio)
             print(f"Recognized command: {command}")
+            if is_blind_mode:
+                speak_text(f"Recognized command: {command}")
             return command
         except sr.WaitTimeoutError:
-            print("Listening timed out")
+            message = "Listening timed out"
+            if is_blind_mode:
+                speak_text(message)
+            print(message)
             return None
         except sr.UnknownValueError:
-            print("Could not understand audio")
+            message = "Could not understand audio"
+            if is_blind_mode:
+                speak_text(message)
+            print(message)
             return None
         except sr.RequestError as e:
-            print(f"Could not request results from Google Speech Recognition service; {e}")
+            message = f"Could not request results from Google Speech Recognition service; {e}"
+            if is_blind_mode:
+                speak_text(message)
+            print(message)
             return None
-
+        
 def start_application(app_name):
     def get_installed_apps():
         apps = list(winapps.list_installed())
@@ -332,20 +382,14 @@ def generate_and_save_code(user_input, model):
         extension = get_file_extension(language)
 
         # Remove any potential markdown code block syntax
-        generated_code = generated_code.strip('`')
-        if generated_code.startswith(language):
-            generated_code = generated_code[len(language):].strip()
+        generated_code = re.sub(r'^```.*?\n|```$', '', generated_code, flags=re.DOTALL).strip()
 
         # Create a root window
         root = tk.Tk()
         root.withdraw()  # Hide the main window
 
         # Ask for file name
-        file_name = simpledialog.askstring("File Name", f"Enter a name for the {language} file:",
-                                           initialvalue=f"generated_code{extension}")
-        if file_name is None:  # User cancelled
-            print("File save cancelled.")
-            return None
+        file_name = "generated_code"
 
         if not file_name.endswith(extension):
             file_name += extension
@@ -378,18 +422,22 @@ def generate_and_save_code(user_input, model):
                 result = subprocess.run([sys.executable, file_path], capture_output=True, text=True, timeout=10)
                 print("Output:")
                 print(result.stdout)
-                result = f"Code: \n{generated_code} \nOutput: {result.stdout}"
+                result_output = f"Output: {result.stdout}"
                 if result.stderr:
                     print("Errors:")
                     print(result.stderr)
+                    result_output += f"\nErrors: {result.stderr}"
             except subprocess.TimeoutExpired:
                 print("Execution timed out after 10 seconds.")
+                result_output = "Execution timed out after 10 seconds."
             except Exception as e:
                 print(f"An error occurred while executing the code: {e}")
+                result_output = f"An error occurred while executing the code: {e}"
         else:
             print(f"\nNote: Automatic execution is only supported for Python. The {language} code has been saved but not executed.")
+            result_output = f"Generated {language} code has been saved."
 
-        return result
+        return result_output
     else:
         print("Failed to generate code.")
         return None
@@ -413,8 +461,17 @@ def get_file_extension(language):
     return extensions.get(language, '.txt')
 
 def process_command(command, max_retries=1):
+    global is_blind_mode
     if not command.strip():
         return "Empty command. Please provide a valid command."
+    if "i am blind" in command.lower():
+        is_blind_mode = True
+        response = "Blind mode activated. All future prompts and responses will be read aloud."
+        speak_text(response)
+        return response
+
+    if is_blind_mode:
+        speak_text(f"You said: {command}")
 
     prompt = f"""
     Given the user command: "{command}"
@@ -431,7 +488,9 @@ def process_command(command, max_retries=1):
     9. start_application: Requires an "app_name" parameter
     10. install_application: Requires an "app_name" parameter
     11. generate_and_save_code: Requires a "language" and "code_description" parameter
-    12. no_action: Use this if no UI action is needed
+    12. generate_and_save_word_document: Requires a "content" parameter
+    13. generate_powerpoint: Requires "title"
+    14. no_action: Use this if no UI action is needed
 
     Example response formats:
     {{"action": "close_window", "params": {{"window_name": "Firefox"}}}}
@@ -445,19 +504,38 @@ def process_command(command, max_retries=1):
     {{"action": "start_application", "params": {{"app_name": "winword.exe"}}}}
     {{"action": "install_application", "params": {{"app_name": "Chrome"}}}}
     {{"action": "generate_and_save_code", "params": {{"language": "python", "code_description": "A function to calculate fibonacci numbers"}}}}
+    {{"action": "generate_powerpoint", "params": {{"title": "Automated Presentation"}}}}
     {{"action": "no_action", "response": "Hello! How can I assist you with UI automation today?"}}
+
+    For the generate_and_save_word_document action, provide a detailed, well-structured content for a Word document. The content should be rich, informative, and well-organized. Include appropriate headings, subheadings, and paragraphs. The content should be at least 500 words long and cover the topic comprehensively.
+
+    Example response format for generate_and_save_word_document:
+    {{"action": "generate_and_save_word_document", "params": {{"content": "# Title of the Document\\n\\n## Introduction\\n[Detailed introduction paragraph]\\n\\n## Main Section 1\\n[Comprehensive content for section 1]\\n\\n### Subsection 1.1\\n[Detailed information for subsection 1.1]\\n\\n### Subsection 1.2\\n[Detailed information for subsection 1.2]\\n\\n## Main Section 2\\n[Comprehensive content for section 2]\\n\\n### Subsection 2.1\\n[Detailed information for subsection 2.1]\\n\\n### Subsection 2.2\\n[Detailed information for subsection 2.2]\\n\\n## Conclusion\\n[Detailed concluding paragraph]\\n\\n"}}}}
+
+    Ensure that the generated content is relevant to the user's command, well-structured, and provides valuable information on the topic. The response should be a valid JSON object.
     """
 
     try:
         response = g_model.generate_content(prompt)
-        print(response)
-        json_match = re.search(r'```json\s*(.*?)\s*```', response.text, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(1)
-        else:
-            json_str = response.text
+        logging.info(f"Raw response from Gemini: {response.text}")
 
-        action_data = json.loads(json_str)
+        # Simplify JSON extraction
+        json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
+        if not json_match:
+            raise ValueError("No JSON object found in the response")
+
+        json_str = json_match.group(0)
+
+        # Escape control characters in the JSON string
+        json_str = json_str.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+
+        # Validate the JSON format
+        try:
+            action_data = json.loads(json_str)
+        except json.JSONDecodeError as json_err:
+            logging.error(f"JSON parsing error: {str(json_err)}")
+            logging.error(f"Problematic JSON string: {json_str}")
+            return f"Error parsing the AI response. JSONDecodeError: {str(json_err)}"
 
         if not isinstance(action_data, dict):
             raise ValueError(f"Invalid response format. Expected a dictionary, got: {type(action_data)}")
@@ -469,10 +547,190 @@ def process_command(command, max_retries=1):
             return action_data.get("response", "No action needed")
 
         result = execute_ui_action(action_data["action"], action_data.get("params", {}))
+
+        if is_blind_mode:
+            speak_text(f"Response: {result}")
+
         return result
     except Exception as e:
         logging.error(f"Error in process_command: {str(e)}")
-        return f"An error occurred"
+        return f"An error occurred: {str(e)}"
+
+def generate_powerpoint(title):
+    prompt = f"""
+    Generate a PowerPoint presentation with the title '{title}'.
+    Provide the following information:
+    - Title: The main title of the presentation
+    - Subtitle: A subtitle for the presentation
+    - Agenda Items: At least 5 agenda items, each with a brief description
+    - Filename: A suggested filename for the PowerPoint file
+
+    Format your response as a simple text list, not as JSON.
+    """
+
+    try:
+        response = g_model.generate_content(prompt)
+        print(f"Raw response from AI model: {response.text}")
+
+        # Parse the response text
+        lines = response.text.split('\n')
+        presentation_data = {
+            "title": title,
+            "subtitle": "Generated Presentation",
+            "agenda_items": [],
+            "filename": f"{title.lower().replace(' ', '_')}_presentation.pptx"
+        }
+
+        current_item = None
+        for line in lines:
+            line = line.strip()
+            if line.lower().startswith("title:"):
+                presentation_data["title"] = line.split(":", 1)[1].strip()
+            elif line.lower().startswith("subtitle:"):
+                presentation_data["subtitle"] = line.split(":", 1)[1].strip()
+            elif line.lower().startswith("filename:"):
+                presentation_data["filename"] = line.split(":", 1)[1].strip()
+            elif ":" in line and not line.startswith("-"):
+                current_item = {"item": line.split(":", 1)[0].strip(), "description": line.split(":", 1)[1].strip()}
+                presentation_data["agenda_items"].append(current_item)
+            elif line.startswith("-") and current_item:
+                current_item["description"] += " " + line[1:].strip()
+
+        # Ensure we have at least 5 agenda items
+        while len(presentation_data["agenda_items"]) < 5:
+            presentation_data["agenda_items"].append({
+                "item": f"Additional Topic {len(presentation_data['agenda_items']) + 1}",
+                "description": "This slide covers additional information related to the main topic."
+            })
+
+        # Create the PowerPoint presentation
+        prs = Presentation()
+
+        # Add a title slide
+        title_slide_layout = prs.slide_layouts[0]
+        slide = prs.slides.add_slide(title_slide_layout)
+        title_shape = slide.shapes.title
+        subtitle_shape = slide.placeholders[1]
+
+        title_shape.text = presentation_data["title"]
+        subtitle_shape.text = presentation_data["subtitle"]
+
+        # Add a content slide for the agenda
+        bullet_slide_layout = prs.slide_layouts[1]
+        slide = prs.slides.add_slide(bullet_slide_layout)
+        shapes = slide.shapes
+
+        title_shape = shapes.title
+        body_shape = shapes.placeholders[1]
+
+        title_shape.text = "Agenda"
+
+        tf = body_shape.text_frame
+        tf.text = ""  # Clear any existing text
+
+        for item in presentation_data["agenda_items"]:
+            p = tf.add_paragraph()
+            p.text = item["item"]
+            p.level = 1
+
+        # Add a separate slide for each agenda item with description
+        for item in presentation_data["agenda_items"]:
+            slide = prs.slides.add_slide(bullet_slide_layout)
+            shapes = slide.shapes
+
+            title_shape = shapes.title
+            body_shape = shapes.placeholders[1]
+
+            title_shape.text = item["item"]
+
+            tf = body_shape.text_frame
+            tf.text = item["description"]
+
+        # Save the presentation
+        def save_presentation():
+            root = tk.Tk()
+            root.withdraw()  # Hide the main window
+
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".pptx",
+                filetypes=[("PowerPoint presentations", "*.pptx"), ("All files", "*.*")],
+                title="Save Generated PowerPoint Presentation",
+                initialfile=presentation_data["filename"]
+            )
+
+            if not file_path:  # User cancelled
+                print("File save cancelled.")
+                return None
+
+            prs.save(file_path)
+            print(f"Generated PowerPoint presentation saved to {file_path}")
+            return f"Generated PowerPoint presentation saved to {file_path}"
+
+        # Add the save_presentation function to the queue
+        tk_queue.put((save_presentation, (), {}))
+        # Process the queue in the main thread
+        process_tk_queue()
+
+        return "PowerPoint presentation generation initiated."
+    except Exception as e:
+        print(f"Error in generate_powerpoint: {str(e)}")
+        return f"An error occurred while generating the PowerPoint presentation: {str(e)}"
+
+
+def generate_and_save_word_document(content):
+    try:
+        # Create a new Document
+        doc = Document()
+
+        # Parse the markdown-like content and add it to the document
+        lines = content.split('\n')
+        for line in lines:
+            if line.startswith('# '):
+                doc.add_heading(line[2:], level=1)
+            elif line.startswith('## '):
+                doc.add_heading(line[3:], level=2)
+            elif line.startswith('### '):
+                doc.add_heading(line[4:], level=3)
+            elif line.strip():
+                doc.add_paragraph(line)
+
+        # Save the document
+        def save_document():
+            root = tk.Tk()
+            root.withdraw()  # Hide the main window
+
+            # Ask for file name
+            file_name = "generated_doc"
+
+            if not file_name.endswith(".docx"):
+                file_name += ".docx"
+
+            # Ask for save location
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".docx",
+                filetypes=[("Word documents", "*.docx"), ("All files", "*.*")],
+                title="Save Generated Word Document",
+                initialfile=file_name
+            )
+
+            if not file_path:  # User cancelled
+                print("File save cancelled.")
+                return None
+
+            doc.save(file_path)
+            print(f"Generated Word document saved to {file_path}")
+            return f"Generated Word document saved to {file_path}"
+
+        # Add the save_document function to the queue
+        tk_queue.put((save_document, (), {}))
+        # Process the queue in the main thread
+        process_tk_queue()
+
+        return "Word document generation initiated."
+    except Exception as e:
+        logging.error(f"Error generating and saving Word document: {str(e)}")
+        return f"Error generating and saving Word document"
+
 
 def interact_with_control(params):
     window_name = params.get("window_name")
@@ -705,7 +963,7 @@ def get_detailed_process_info(pid):
     except Exception as e:
         logging.error(f"Error in get_detailed_process_info: {str(e)}")
         return f"Error getting process info for PID {pid}"
-
+    
 def execute_ui_action(action, params):
     try:
         if action == "close_window":
@@ -728,6 +986,10 @@ def execute_ui_action(action, params):
             return installer.install_app(params.get("app_name"))
         elif action == "generate_and_save_code":
             return generate_and_save_code(params.get("language") + params.get("code_description"), g_model)
+        elif action == "generate_and_save_word_document":
+             return generate_and_save_word_document(params.get("content", ""))
+        elif action == "generate_powerpoint":
+            return generate_powerpoint(params.get("title"))
         else:
             return f"Unknown action: {action}"
     except Exception as e:
@@ -751,6 +1013,16 @@ def extract_app_name(text):
     elif close_match:
         return close_match.group(1)
     return None
+
+@app.route('/command', methods=['POST'])
+def receive_command():
+    data = request.json
+    if not data or 'command' not in data:
+        return jsonify({"error": "No command provided"}), 400
+
+    command = data['command']
+    result = process_command(command)
+    return jsonify({"result": result})
 
 @app.route('/status', methods=['GET'])
 def get_status():
@@ -778,6 +1050,10 @@ if __name__ == "__main__":
     flask_thread.start()
 
     # Keep the main thread alive
+    tk_thread = threading.Thread(target=lambda: tk.Tk().mainloop(), daemon=True)
+    tk_thread.start()
+
+
     try:
         while True:
             time.sleep(1)
