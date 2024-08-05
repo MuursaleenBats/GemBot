@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import "package:record/record.dart";
@@ -16,24 +17,51 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   TextEditingController _controller = TextEditingController();
   List<Map<String, String>> _chatMessages = [];
   bool _showWelcomeMessage = true;
   bool _isListening = false;
   Timer? _statusCheckTimer;
   Timer? _listeningTimer;
-
+  late AnimationController _welcomeAnimationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
   @override
   void initState() {
     super.initState();
     _startStatusCheck();
+
+    // Initialize welcome animation
+    _welcomeAnimationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _welcomeAnimationController,
+        curve: Interval(0.0, 0.5, curve: Curves.easeIn),
+      ),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _welcomeAnimationController,
+        curve: Interval(0.5, 1.0, curve: Curves.easeOut),
+      ),
+    );
+
+    // Start the animation
+    _welcomeAnimationController.forward();
   }
 
   @override
   void dispose() {
     _statusCheckTimer?.cancel();
     _listeningTimer?.cancel();
+    _welcomeAnimationController.dispose();
     super.dispose();
   }
 
@@ -49,11 +77,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final data = json.decode(response.body);
       if (data.containsKey('command') && data.containsKey('response')) {
         setState(() {
-          if (!_chatMessages.any((message) => message['prompt'] == data['command'])) {
-            _chatMessages.add({
-              'prompt': data['command'],
-              'response': data['response']
-            });
+          if (!_chatMessages
+              .any((message) => message['prompt'] == data['command'])) {
+            _chatMessages
+                .add({'prompt': data['command'], 'response': data['response']});
           }
           _isListening = false;
           _showWelcomeMessage = false;
@@ -88,7 +115,8 @@ class _HomeScreenState extends State<HomeScreen> {
       print('Response data: ${response.body}');
       setState(() {
         if (command == "mic") {
-          if (!_chatMessages.any((message) => message['prompt'] == "Listening for command")) {
+          if (!_chatMessages
+              .any((message) => message['prompt'] == "Listening for command")) {
             _chatMessages.add(
                 {'prompt': "Listening for command", 'response': response.body});
           }
@@ -173,27 +201,45 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: _showWelcomeMessage
                     ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 40.0, vertical: 20.0),
-                              child: Image.asset(
-                                'assets/logo.jpg',
-                                height: 100.0,
-                                width: 100.0,
+                        child: AnimatedBuilder(
+                          animation: _welcomeAnimationController,
+                          builder: (context, child) {
+                            return Opacity(
+                              opacity: _fadeAnimation.value,
+                              child: Transform.scale(
+                                scale: _scaleAnimation.value,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 40.0, vertical: 20.0),
+                                      child: Image.asset(
+                                        'assets/logo.jpg',
+                                        height: 100.0,
+                                        width: 100.0,
+                                      ),
+                                    ),
+                                    Text(
+                                      "Welcome to WinAuto",
+                                      style: TextStyle(
+                                          color: Color(0x90FFFFFF),
+                                          fontSize: 30.0,
+                                          fontWeight: FontWeight.bold,
+                                          shadows: <Shadow>[
+                                            Shadow(
+                                              offset: Offset(5.0, 5.0),
+                                              blurRadius: 3.0,
+                                              color:
+                                                  Color.fromARGB(255, 0, 0, 0),
+                                            ),
+                                          ]),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            Text(
-                              "Welcome to WinAuto",
-                              style: TextStyle(
-                                color: Color(0x90FFFFFF),
-                                fontSize: 30.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
                       )
                     : ListView.builder(
@@ -304,9 +350,16 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 color: Colors.black.withOpacity(0.5),
                 child: Center(
-                  child: Text(
-                    "Listening for command...",
-                    style: TextStyle(color: Colors.white, fontSize: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ListeningIndicator(),
+                      SizedBox(height: 20),
+                      Text(
+                        "Listening for command...",
+                        style: TextStyle(color: Colors.white, fontSize: 24),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -315,4 +368,94 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+class ListeningIndicator extends StatefulWidget {
+  @override
+  _ListeningIndicatorState createState() => _ListeningIndicatorState();
+}
+
+class _ListeningIndicatorState extends State<ListeningIndicator>
+    with TickerProviderStateMixin {
+  late AnimationController _waveController;
+  late AnimationController _glowController;
+
+  @override
+  void initState() {
+    super.initState();
+    _waveController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    )..repeat();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 1),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _waveController.dispose();
+    _glowController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_waveController, _glowController]),
+      builder: (context, child) {
+        return Container(
+          width: 100,
+          height: 100,
+          child: CustomPaint(
+            painter: WaveBorderPainter(
+              wavePhase: _waveController.value,
+              glowIntensity: _glowController.value,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class WaveBorderPainter extends CustomPainter {
+  final double wavePhase;
+  final double glowIntensity;
+
+  WaveBorderPainter({required this.wavePhase, required this.glowIntensity});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.blue.withOpacity(0.5 + glowIntensity * 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3 * glowIntensity);
+
+    final path = Path();
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    for (double i = 0; i < 360; i += 1) {
+      final radians = i * (math.pi / 180);
+      final waveOffset =
+          math.sin((radians * 3) + (wavePhase * 2 * math.pi)) * 1.5;
+      final x = center.dx + (radius + waveOffset) * math.cos(radians);
+      final y = center.dy + (radius + waveOffset) * math.sin(radians);
+
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
