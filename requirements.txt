@@ -9,3 +9,4 @@ python-Levenshtein
 flask
 pywinauto
 psutil
+pywhatkit
