@@ -438,6 +438,9 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     cursorColor: Colors.white,
                     style: TextStyle(color: Colors.white),
+                    onFieldSubmitted: (value) {
+                      _sendCommand(value);
+                    },
                   ),
                 ),
               )
