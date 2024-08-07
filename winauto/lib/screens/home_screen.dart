@@ -80,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen>
           if (!_chatMessages
               .any((message) => message['prompt'] == data['command'])) {
             _chatMessages
-              .add({'prompt': data['command'], 'response': data['response']});
+                .add({'prompt': data['command'], 'response': data['response']});
           }
           _isListening = false;
           _showWelcomeMessage = false;
@@ -99,8 +99,18 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  bool _isWaitingForResponse = false;
+
   Future<void> _sendCommand(String command) async {
-    print("Send Command");
+    setState(() {
+      if (command != "mic") {
+        // Immediately add the user's command to the chat
+        _chatMessages.add({'prompt': command, 'response': '...'});
+        _isWaitingForResponse = true;
+      }
+      _showWelcomeMessage = false;
+    });
+    _controller.clear();
     final response = await http.post(
       Uri.parse('http://localhost:5000/command'),
       headers: <String, String>{
@@ -112,28 +122,26 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     if (response.statusCode == 200) {
-      print('Response data: ${response.body}');
-      Map<String, dynamic> responseBody = json.decode(response.body);
-      // Extract the result value
-      String result = responseBody['result'] ?? 'No result found';
+      final data = json.decode(response.body);
+      print('Response data: ${data["result"]}');
       setState(() {
         if (command == "mic") {
-          if (!_chatMessages
-              .any((message) => message['prompt'] == "Listening for command")) {
-            _chatMessages.add(
-                {'prompt': "Listening for command", 'response': result});
-          }
+          // For voice commands, we'll wait for the backend to send both command and response
         } else {
-          if (!_chatMessages.any((message) => message['prompt'] == command)) {
-            _chatMessages.add({'prompt': command, 'response': result});
-          }
+          // Update the response for the command we just sent
+          _chatMessages.last['response'] = data["result"];
         }
-        _showWelcomeMessage = false;
+        _isWaitingForResponse = false;
       });
     } else {
       print("Failed to send command");
+      setState(() {
+        if (command != "mic") {
+          _chatMessages.last['response'] = "Failed to get response";
+        }
+        _isWaitingForResponse = false;
+      });
     }
-    _controller.clear();
   }
 
   void _navigateToAboutUs() {
@@ -304,8 +312,8 @@ class _HomeScreenState extends State<HomeScreen>
                                           horizontal: 40.0, vertical: 20.0),
                                       child: Image.asset(
                                         'assets/logo.gif',
-                                        height: 300.0,  // 100.0 * 1.2
-                                        width: 300.0,   // 100.0 * 1.2
+                                        height: 300.0, // 100.0 * 1.2
+                                        width: 300.0, // 100.0 * 1.2
                                       ),
                                     ),
                                     Text(
@@ -366,10 +374,13 @@ class _HomeScreenState extends State<HomeScreen>
                                   ),
                                   padding: EdgeInsets.all(10.0),
                                   margin: EdgeInsets.only(bottom: 10.0),
-                                  child: Text(
-                                    "${message['response']}",
-                                    style: TextStyle(color: Colors.white70),
-                                  ),
+                                  child: message['response'] == '...'
+                                      ? LoadingDots()
+                                      : Text(
+                                          "${message['response']}",
+                                          style:
+                                              TextStyle(color: Colors.white70),
+                                        ),
                                 ),
                               ),
                             ],
@@ -601,6 +612,63 @@ class AboutUsPage extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class LoadingDots extends StatefulWidget {
+  @override
+  _LoadingDotsState createState() => _LoadingDotsState();
+}
+
+class _LoadingDotsState extends State<LoadingDots>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 600),
+    )..repeat();
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (index) {
+        return AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Opacity(
+              opacity: (index == 0)
+                  ? _animation.value
+                  : (index == 1)
+                      ? (_animation.value > 0.5 ? 1.0 : 0.0)
+                      : (_animation.value > 0.8 ? 1.0 : 0.0),
+              child: Container(
+                width: 8.0,
+                height: 8.0,
+                margin: EdgeInsets.symmetric(horizontal: 4.0),
+                decoration: BoxDecoration(
+                  color: Colors.white70,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 }

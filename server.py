@@ -569,52 +569,69 @@ def process_command(command, max_retries=1):
 
 def generate_powerpoint(title):
     prompt = f"""
-    Generate a PowerPoint presentation with the title '{title}'.
-    Provide the following information:
-    - Title: The main title of the presentation
-    - Subtitle: A subtitle for the presentation
-    - Agenda Items: At least 5 agenda items, each with a brief description
-    - Filename: A suggested filename for the PowerPoint file
+    Given the user command: "Generate a PowerPoint presentation with the title '{title}'"
+    Generate a JSON response with the appropriate parameters for creating the PowerPoint presentation.
+    The JSON response should include the following fields:
+    - "title": The title of the presentation
+    - "subtitle": The subtitle of the presentation
+    - "agenda_items": An array of at least 5 agenda items for the presentation, each with a 2-line description
+    - "filename": The filename for the PowerPoint file
 
-    Format your response as a simple text list, not as JSON.
+    Example response format:
+    {{
+        "title": "Automated Presentation",
+        "subtitle": "Created using python-pptx",
+        "agenda_items": [
+            {{
+                "item": "Introduction",
+                "description": "This slide introduces the topic. It provides an overview of what will be covered."
+            }},
+            {{
+                "item": "Main Topic 1",
+                "description": "This slide covers the first main topic. It discusses key points and relevant information."
+            }},
+            {{
+                "item": "Main Topic 2",
+                "description": "This slide covers the second main topic. It provides additional details and insights."
+            }},
+            {{
+                "item": "Main Topic 3",
+                "description": "This slide covers the third main topic. It includes important facts and data."
+            }},
+            {{
+                "item": "Conclusion",
+                "description": "This slide summarizes the main points. It provides a final overview and closing remarks."
+            }}
+        ],
+        "filename": "automated_presentation.pptx"
+    }}
     """
 
     try:
         response = g_model.generate_content(prompt)
-        print(f"Raw response from AI model: {response.text}")
+        print(response)
+        json_match = re.search(r'```json\s*(.*?)\s*```', response.text, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            json_str = response.text
 
-        # Parse the response text
-        lines = response.text.split('\n')
-        presentation_data = {
-            "title": title,
-            "subtitle": "Generated Presentation",
-            "agenda_items": [],
-            "filename": f"{title.lower().replace(' ', '_')}_presentation.pptx"
-        }
+        action_data = json.loads(json_str)
 
-        current_item = None
-        for line in lines:
-            line = line.strip()
-            if line.lower().startswith("title:"):
-                presentation_data["title"] = line.split(":", 1)[1].strip()
-            elif line.lower().startswith("subtitle:"):
-                presentation_data["subtitle"] = line.split(":", 1)[1].strip()
-            elif line.lower().startswith("filename:"):
-                presentation_data["filename"] = line.split(":", 1)[1].strip()
-            elif ":" in line and not line.startswith("-"):
-                current_item = {"item": line.split(":", 1)[0].strip(), "description": line.split(":", 1)[1].strip()}
-                presentation_data["agenda_items"].append(current_item)
-            elif line.startswith("-") and current_item:
-                current_item["description"] += " " + line[1:].strip()
+        if not isinstance(action_data, dict):
+            raise ValueError(f"Invalid response format. Expected a dictionary, got: {type(action_data)}")
 
-        # Ensure we have at least 5 agenda items
-        while len(presentation_data["agenda_items"]) < 5:
-            presentation_data["agenda_items"].append({
-                "item": f"Additional Topic {len(presentation_data['agenda_items']) + 1}",
-                "description": "This slide covers additional information related to the main topic."
-            })
+        title = action_data.get("title", "Automated Presentation")
+        subtitle = action_data.get("subtitle", "Created using python-pptx")
+        agenda_items = action_data.get("agenda_items", [
+            {"item": "Introduction", "description": "This slide introduces the topic. It provides an overview of what will be covered."},
+            {"item": "Main Topic 1", "description": "This slide covers the first main topic. It discusses key points and relevant information."},
+            {"item": "Main Topic 2", "description": "This slide covers the second main topic. It provides additional details and insights."},
+            {"item": "Main Topic 3", "description": "This slide covers the third main topic. It includes important facts and data."},
+            {"item": "Conclusion", "description": "This slide summarizes the main points. It provides a final overview and closing remarks."}
+        ])
+        filename = action_data.get("filename", "automated_presentation.pptx")
 
-        # Create the PowerPoint presentation
         prs = Presentation()
 
         # Add a title slide
@@ -623,8 +640,8 @@ def generate_powerpoint(title):
         title_shape = slide.shapes.title
         subtitle_shape = slide.placeholders[1]
 
-        title_shape.text = presentation_data["title"]
-        subtitle_shape.text = presentation_data["subtitle"]
+        title_shape.text = title
+        subtitle_shape.text = subtitle
 
         # Add a content slide for the agenda
         bullet_slide_layout = prs.slide_layouts[1]
@@ -639,13 +656,13 @@ def generate_powerpoint(title):
         tf = body_shape.text_frame
         tf.text = ""  # Clear any existing text
 
-        for item in presentation_data["agenda_items"]:
+        for item in agenda_items:
             p = tf.add_paragraph()
             p.text = item["item"]
             p.level = 1
 
         # Add a separate slide for each agenda item with description
-        for item in presentation_data["agenda_items"]:
+        for item in agenda_items:
             slide = prs.slides.add_slide(bullet_slide_layout)
             shapes = slide.shapes
 
@@ -658,6 +675,9 @@ def generate_powerpoint(title):
             tf.text = item["description"]
 
         # Save the presentation
+        # prs.save(filename)
+
+        # Save the presentation
         def save_presentation():
             root = tk.Tk()
             root.withdraw()  # Hide the main window
@@ -666,7 +686,7 @@ def generate_powerpoint(title):
                 defaultextension=".pptx",
                 filetypes=[("PowerPoint presentations", "*.pptx"), ("All files", "*.*")],
                 title="Save Generated PowerPoint Presentation",
-                initialfile=presentation_data["filename"]
+                initialfile=filename
             )
 
             if not file_path:  # User cancelled
@@ -1044,6 +1064,7 @@ def get_status():
     print(latest_status)
     try:
         status_data = json.loads(latest_status)
+        latest_status = "No updates"
         return jsonify(status_data)
     except:
         return jsonify({"status": latest_status})
