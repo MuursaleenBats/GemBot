@@ -526,46 +526,54 @@ def process_command(command, max_retries=1):
     Ensure that the generated content is relevant to the user's command, well-structured, and provides valuable information on the topic. The response should be a valid JSON object.
     """
 
-    try:
-        response = g_model.generate_content(prompt)
-        logging.info(f"Raw response from Gemini: {response.text}")
-
-        # Simplify JSON extraction
-        json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
-        if not json_match:
-            raise ValueError("No JSON object found in the response")
-
-        json_str = json_match.group(0)
-
-        # Escape control characters in the JSON string
-        json_str = json_str.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
-
-        # Validate the JSON format
+    retries = 0
+    while retries < max_retries:
         try:
-            action_data = json.loads(json_str)
+            response = g_model.generate_content(prompt)
+            logging.info(f"Raw response from Gemini: {response.text}")
+
+            # Simplify JSON extraction
+            json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
+            if not json_match:
+                raise ValueError("No JSON object found in the response")
+
+            json_str = json_match.group(0)
+
+            # Escape control characters in the JSON string
+            json_str = json_str.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+
+            # Validate the JSON format
+            try:
+                action_data = json.loads(json_str)
+            except json.JSONDecodeError as json_err:
+                logging.error(f"JSON parsing error: {str(json_err)}")
+                logging.error(f"Problematic JSON string: {json_str}")
+                raise json_err
+
+            if not isinstance(action_data, dict):
+                raise ValueError(f"Invalid response format. Expected a dictionary, got: {type(action_data)}")
+
+            if "action" not in action_data:
+                raise ValueError(f"Invalid response from AI model. Missing 'action' key. Response: {action_data}")
+
+            if action_data["action"] == "no_action":
+                return action_data.get("response", "No action needed")
+
+            result = execute_ui_action(action_data["action"], action_data.get("params", {}))
+
+            if is_blind_mode:
+                speak_text(f"Response: {result}")
+
+            return result
         except json.JSONDecodeError as json_err:
-            logging.error(f"JSON parsing error: {str(json_err)}")
-            logging.error(f"Problematic JSON string: {json_str}")
-            return f"Error parsing the AI response. JSONDecodeError: {str(json_err)}"
-
-        if not isinstance(action_data, dict):
-            raise ValueError(f"Invalid response format. Expected a dictionary, got: {type(action_data)}")
-
-        if "action" not in action_data:
-            raise ValueError(f"Invalid response from AI model. Missing 'action' key. Response: {action_data}")
-
-        if action_data["action"] == "no_action":
-            return action_data.get("response", "No action needed")
-
-        result = execute_ui_action(action_data["action"], action_data.get("params", {}))
-
-        if is_blind_mode:
-            speak_text(f"Response: {result}")
-
-        return result
-    except Exception as e:
-        logging.error(f"Error in process_command: {str(e)}")
-        return f"An error occurred: {str(e)}"
+            retries += 1
+            if retries < max_retries:
+                logging.error(f"Error parsing the AI response. JSONDecodeError: {str(json_err)}. Retrying...")
+            else:
+                return f"Error parsing the AI response after {max_retries} retries. JSONDecodeError: {str(json_err)}"
+        except Exception as e:
+            logging.error(f"Error in process_command: {str(e)}")
+            return f"An error occurred: {str(e)}"
 
 def generate_powerpoint(title):
     prompt = f"""
