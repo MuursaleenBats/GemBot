@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import "package:record/record.dart";
 import "package:http/http.dart" as http;
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:developer';
 import 'dart:async';
 
@@ -28,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen>
   late AnimationController _welcomeAnimationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+
   @override
   void initState() {
     super.initState();
@@ -80,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen>
           if (!_chatMessages
               .any((message) => message['prompt'] == data['command'])) {
             _chatMessages
-                .add({'prompt': data['command'], 'response': data['response']});
+              .add({'prompt': data['command'], 'response': data['response']});
           }
           _isListening = false;
           _showWelcomeMessage = false;
@@ -113,16 +113,19 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (response.statusCode == 200) {
       print('Response data: ${response.body}');
+      Map<String, dynamic> responseBody = json.decode(response.body);
+      // Extract the result value
+      String result = responseBody['result'] ?? 'No result found';
       setState(() {
         if (command == "mic") {
           if (!_chatMessages
               .any((message) => message['prompt'] == "Listening for command")) {
             _chatMessages.add(
-                {'prompt': "Listening for command", 'response': response.body});
+                {'prompt': "Listening for command", 'response': result});
           }
         } else {
           if (!_chatMessages.any((message) => message['prompt'] == command)) {
-            _chatMessages.add({'prompt': command, 'response': response.body});
+            _chatMessages.add({'prompt': command, 'response': result});
           }
         }
         _showWelcomeMessage = false;
@@ -131,6 +134,17 @@ class _HomeScreenState extends State<HomeScreen>
       print("Failed to send command");
     }
     _controller.clear();
+  }
+
+  void _navigateToAboutUs() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AboutUsPage()),
+    );
+  }
+
+  void _navigateToSettings() {
+    // Implement settings navigation here
   }
 
   @override
@@ -144,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen>
           Column(
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
                     onPressed: () => showDialog(
@@ -194,7 +209,80 @@ class _HomeScreenState extends State<HomeScreen>
                     icon: Icon(
                       Icons.info,
                       color: Color(0x50FFFFFF),
+                      size: 30.0, // Increased icon size
                     ),
+                  ),
+                  Row(
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: _navigateToAboutUs,
+                            splashRadius: 20.0,
+                            splashColor: Color(0xffffa500),
+                            icon: Icon(
+                              Icons.people,
+                              color: Color(0x50FFFFFF),
+                              size: 30.0, // Increased icon size
+                            ),
+                          ),
+                          SizedBox(width: 5.0), // Increased padding
+                          MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            onEnter: (event) => setState(() {
+                              _isHoveringAboutUs = true;
+                            }),
+                            onExit: (event) => setState(() {
+                              _isHoveringAboutUs = false;
+                            }),
+                            child: Text(
+                              "About Us",
+                              style: TextStyle(
+                                color: _isHoveringAboutUs
+                                    ? Colors.white
+                                    : Color(0x50FFFFFF),
+                                fontSize: 14.0, // Reduced text size
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(width: 20.0), // Increased padding
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: _navigateToSettings,
+                            splashRadius: 20.0,
+                            splashColor: Color(0xffffa500),
+                            icon: Icon(
+                              Icons.settings,
+                              color: Color(0x50FFFFFF),
+                              size: 30.0, // Increased icon size
+                            ),
+                          ),
+                          SizedBox(width: 5.0), // Increased padding
+                          MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            onEnter: (event) => setState(() {
+                              _isHoveringSettings = true;
+                            }),
+                            onExit: (event) => setState(() {
+                              _isHoveringSettings = false;
+                            }),
+                            child: Text(
+                              "Settings",
+                              style: TextStyle(
+                                color: _isHoveringSettings
+                                    ? Colors.white
+                                    : Color(0x50FFFFFF),
+                                fontSize: 14.0, // Reduced text size
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 10.0)
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -215,9 +303,9 @@ class _HomeScreenState extends State<HomeScreen>
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 40.0, vertical: 20.0),
                                       child: Image.asset(
-                                        'assets/logo.jpg',
-                                        height: 100.0,
-                                        width: 100.0,
+                                        'assets/logo.gif',
+                                        height: 300.0,  // 100.0 * 1.2
+                                        width: 300.0,   // 100.0 * 1.2
                                       ),
                                     ),
                                     Text(
@@ -368,6 +456,9 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+
+  bool _isHoveringAboutUs = false;
+  bool _isHoveringSettings = false;
 }
 
 class ListeningIndicator extends StatefulWidget {
@@ -458,4 +549,58 @@ class WaveBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class AboutUsPage extends StatelessWidget {
+  final List<Map<String, String>> users = [
+    {
+      'name': 'John Doe',
+      'role': 'Developer',
+      'image': 'assets/user1.png',
+    },
+    {
+      'name': 'Jane Smith',
+      'role': 'Designer',
+      'image': 'assets/user2.png',
+    },
+    {
+      'name': 'Alice Johnson',
+      'role': 'Tester',
+      'image': 'assets/user3.png',
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('About Us'),
+        backgroundColor: Color(0xFF1E1E1E),
+      ),
+      backgroundColor: Color(0xFF1E1E1E),
+      body: ListView.builder(
+        itemCount: users.length,
+        itemBuilder: (context, index) {
+          final user = users[index];
+          return Card(
+            color: Color(0xFF3A3A3A),
+            margin: EdgeInsets.all(10.0),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundImage: AssetImage(user['image']!),
+              ),
+              title: Text(
+                user['name']!,
+                style: TextStyle(color: Colors.white),
+              ),
+              subtitle: Text(
+                user['role']!,
+                style: TextStyle(color: Colors.white70),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }

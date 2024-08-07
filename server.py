@@ -113,8 +113,6 @@ def listen_for_keyword():
     recognizer = sr.Recognizer()
     while True:
         with sr.Microphone() as source:
-            if is_blind_mode:
-                speak_text("Listening for 'Gemini'...")
             print("Listening for 'Gemini'...")
             audio = recognizer.listen(source)
         try:
@@ -125,16 +123,16 @@ def listen_for_keyword():
             if "gemini" in text and not is_processing_command:
                 current_time = time.time()
                 if current_time - last_command_time >= debounce_interval:
-                    message = "Keyword 'Gemini' detected! Listening for command..."
-                    if is_blind_mode:
-                        speak_text(message)
-                    print(message)
+                    #message = "Keyword 'Gemini' detected!"
+                    # if is_blind_mode:
+                    #     speak_text(message)
+                    # print(message)
                     is_processing_command = True
                     with status_lock:
                         latest_status = "Listening for command..."
                     status_event.set()
                     
-                    command = listen_for_command(timeout=5)
+                    command = listen_for_command(timeout=8)
                     
                     if command:
                         result = process_command(command)
@@ -176,15 +174,28 @@ def listen_for_keyword():
 
 def speak_text(text):
     engine = pyttsx3.init()
+    
+    # Get available voices
+    voices = engine.getProperty('voices')
+    
+    # Set voice to female (usually the second voice in the list)
+    engine.setProperty('voice', voices[1].id)
+    
+    # Adjust rate (speed) for more natural sound (default is 200)
+    engine.setProperty('rate', 150)
+    
+    # Adjust volume (0.0 to 1.0)
+    engine.setProperty('volume', 0.8)
+    
     engine.say(text)
     engine.runAndWait()
 
-def listen_for_command(timeout=5):
+def listen_for_command(timeout=8):
     global is_blind_mode
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
         if is_blind_mode:
-            speak_text(f"Listening for command for {timeout} seconds...")
+            speak_text(f"Listening for command")
         print(f"Listening for command for {timeout} seconds...")
         try:
             audio = recognizer.listen(source, timeout=timeout)
@@ -258,7 +269,7 @@ def start_application(app_name):
                         print(f"Application '{app_name}' not found. Please make sure the name is correct.")
 
     open_app([app_name])
-    return f"Attempted to open {app_name}"
+    return f"Started {app_name}"
 
 def install_application(code):
     try:
