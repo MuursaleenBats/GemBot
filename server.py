@@ -41,9 +41,11 @@ from pptx.util import Inches, Pt
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 tk_queue = queue.Queue()
-os.environ["API_KEY"] = "AIzaSyDsTNYvMqYM-LAGUd8fB12rWzVixDsU914"
+#os.environ["API_KEY"] = "AIzaSyDotpLkQRPyzTj-flWGHNjbXFiHoJu2DFw" abizer
+os.environ["API_KEY"] = "AIzaSyBqBGn1cOhpBG_mcAQbZnGgLdTL29X0nVk" #mursaleen
 genai.configure(api_key=os.environ["API_KEY"])
 g_model = genai.GenerativeModel('gemini-1.5-pro')
+c_model = genai.GenerativeModel('gemini-1.5-pro',  generation_config={"response_mime_type": "application/json"})
 status_queue = queue.Queue()
 app = Flask(__name__)
 CORS(app)
@@ -397,7 +399,6 @@ def generate_and_save_code(user_input, model):
 
         # Create a root window
         root = tk.Tk()
-        root.withdraw()  # Hide the main window
 
         # Ask for file name
         file_name = "generated_code"
@@ -529,7 +530,18 @@ def process_command(command, max_retries=1):
     retries = 0
     while retries < max_retries:
         try:
-            response = g_model.generate_content(prompt)
+            if "code" in prompt:
+                response= g_model.generate_content(prompt)
+                logging.info(f"Raw response from Gemini: {response.text}")
+
+                # Simplify JSON extraction
+                json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
+                if not json_match:
+                    raise ValueError("No JSON object found in the response")
+
+                json_str = json_match.group(0)
+
+            response = c_model.generate_content(prompt)
             logging.info(f"Raw response from Gemini: {response.text}")
 
             # Simplify JSON extraction
@@ -542,13 +554,15 @@ def process_command(command, max_retries=1):
             # Escape control characters in the JSON string
             json_str = json_str.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
 
+            
             # Validate the JSON format
             try:
                 action_data = json.loads(json_str)
             except json.JSONDecodeError as json_err:
+                # Ignore the JSON parsing error and return the original JSON string
                 logging.error(f"JSON parsing error: {str(json_err)}")
                 logging.error(f"Problematic JSON string: {json_str}")
-                raise json_err
+                return json_str
 
             if not isinstance(action_data, dict):
                 raise ValueError(f"Invalid response format. Expected a dictionary, got: {type(action_data)}")
@@ -565,16 +579,10 @@ def process_command(command, max_retries=1):
                 speak_text(f"Response: {result}")
 
             return result
-        except json.JSONDecodeError as json_err:
-            retries += 1
-            if retries < max_retries:
-                logging.error(f"Error parsing the AI response. JSONDecodeError: {str(json_err)}. Retrying...")
-            else:
-                return f"Error parsing the AI response after {max_retries} retries. JSONDecodeError: {str(json_err)}"
         except Exception as e:
             logging.error(f"Error in process_command: {str(e)}")
             return f"An error occurred: {str(e)}"
-
+        
 def generate_powerpoint(title):
     prompt = f"""
     Given the user command: "Generate a PowerPoint presentation with the title '{title}'"
@@ -688,7 +696,6 @@ def generate_powerpoint(title):
         # Save the presentation
         def save_presentation():
             root = tk.Tk()
-            root.withdraw()  # Hide the main window
 
             file_path = filedialog.asksaveasfilename(
                 defaultextension=".pptx",
@@ -713,7 +720,7 @@ def generate_powerpoint(title):
         return "PowerPoint presentation generation initiated."
     except Exception as e:
         print(f"Error in generate_powerpoint: {str(e)}")
-        return f"An error occurred while generating the PowerPoint presentation: {str(e)}"
+        return f"An error occurred while generating the PowerPoint presentation"
 
 
 def generate_and_save_word_document(content):
@@ -736,7 +743,6 @@ def generate_and_save_word_document(content):
         # Save the document
         def save_document():
             root = tk.Tk()
-            root.withdraw()  # Hide the main window
 
             # Ask for file name
             file_name = "generated_doc"
@@ -1076,6 +1082,12 @@ def get_status():
         return jsonify(status_data)
     except:
         return jsonify({"status": latest_status})
+    
+def create_hidden_root():
+        root = tk.Tk()
+        root.withdraw() # This hides the window
+        root.attributes("-topmost", True)  
+        root.mainloop()
 
 def run_flask():
     app.run(port=5000, debug=True, use_reloader=False, threaded=True)
@@ -1089,8 +1101,9 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
 
+    
     # Keep the main thread alive
-    tk_thread = threading.Thread(target=lambda: tk.Tk().mainloop(), daemon=True)
+    tk_thread = threading.Thread(target=create_hidden_root, daemon=True)
     tk_thread.start()
 
 

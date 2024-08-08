@@ -151,10 +151,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  void _navigateToSettings() {
-    // Implement settings navigation here
-  }
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -222,74 +218,39 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   Row(
                     children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: _navigateToAboutUs,
-                            splashRadius: 20.0,
-                            splashColor: Color(0xffffa500),
-                            icon: Icon(
-                              Icons.people,
-                              color: Color(0x50FFFFFF),
-                              size: 30.0, // Increased icon size
-                            ),
-                          ),
-                          SizedBox(width: 5.0), // Increased padding
-                          MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            onEnter: (event) => setState(() {
-                              _isHoveringAboutUs = true;
-                            }),
-                            onExit: (event) => setState(() {
-                              _isHoveringAboutUs = false;
-                            }),
-                            child: Text(
-                              "About Us",
-                              style: TextStyle(
-                                color: _isHoveringAboutUs
-                                    ? Colors.white
-                                    : Color(0x50FFFFFF),
-                                fontSize: 14.0, // Reduced text size
-                              ),
-                            ),
-                          ),
-                        ],
+                      IconButton(
+                        onPressed: _navigateToAboutUs,
+                        splashRadius: 20.0,
+                        splashColor: Color(0xffffa500),
+                        icon: Icon(
+                          Icons.people,
+                          color: Color(0x50FFFFFF),
+                          size: 30.0, // Increased icon size
+                        ),
                       ),
-                      SizedBox(width: 20.0), // Increased padding
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: _navigateToSettings,
-                            splashRadius: 20.0,
-                            splashColor: Color(0xffffa500),
-                            icon: Icon(
-                              Icons.settings,
-                              color: Color(0x50FFFFFF),
-                              size: 30.0, // Increased icon size
+                      SizedBox(width: 5.0), // Increased padding
+                      GestureDetector(
+                        onTap: _navigateToAboutUs,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          onEnter: (event) => setState(() {
+                            _isHoveringAboutUs = true;
+                          }),
+                          onExit: (event) => setState(() {
+                            _isHoveringAboutUs = false;
+                          }),
+                          child: Text(
+                            "About Us",
+                            style: TextStyle(
+                              color: _isHoveringAboutUs
+                                  ? Colors.white
+                                  : Color(0x50FFFFFF),
+                              fontSize: 14.0, // Reduced text size
                             ),
                           ),
-                          SizedBox(width: 5.0), // Increased padding
-                          MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            onEnter: (event) => setState(() {
-                              _isHoveringSettings = true;
-                            }),
-                            onExit: (event) => setState(() {
-                              _isHoveringSettings = false;
-                            }),
-                            child: Text(
-                              "Settings",
-                              style: TextStyle(
-                                color: _isHoveringSettings
-                                    ? Colors.white
-                                    : Color(0x50FFFFFF),
-                                fontSize: 14.0, // Reduced text size
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 10.0)
-                        ],
+                        ),
                       ),
+                      SizedBox(width: 10.0)
                     ],
                   ),
                 ],
@@ -472,7 +433,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   bool _isHoveringAboutUs = false;
-  bool _isHoveringSettings = false;
 }
 
 class ListeningIndicator extends StatefulWidget {
@@ -568,19 +528,24 @@ class WaveBorderPainter extends CustomPainter {
 class AboutUsPage extends StatelessWidget {
   final List<Map<String, String>> users = [
     {
-      'name': 'John Doe',
+      'name': 'Abizer Agarwala',
       'role': 'Developer',
-      'image': 'assets/user1.png',
+      'image': 'assets/user.gif',
     },
     {
-      'name': 'Jane Smith',
-      'role': 'Designer',
-      'image': 'assets/user2.png',
+      'name': 'Haider Jawadwala',
+      'role': 'Developer',
+      'image': 'assets/user.gif',
     },
     {
-      'name': 'Alice Johnson',
-      'role': 'Tester',
-      'image': 'assets/user3.png',
+      'name': 'Mursaleen Batatawala',
+      'role': 'Developer',
+      'image': 'assets/user.gif',
+    },
+     {
+      'name': 'Maheshwar Muthukumar',
+      'role': 'Developer',
+      'image': 'assets/user.gif',
     },
   ];
 
