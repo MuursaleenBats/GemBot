@@ -28,8 +28,8 @@ import psutil
 import time
 import logging
 from installer.app_install import AppInstaller
+from AutoWin.automator import automater
 import threading
-import time
 import tkinter as tk
 from tkinter import filedialog, simpledialog
 from docx import Document
@@ -503,6 +503,7 @@ def process_command(command, max_retries=1):
     12. generate_and_save_word_document: Requires a "content" parameter
     13. generate_powerpoint: Requires "title"
     14. no_action: Use this if no UI action is needed
+    15. process_request: Use this if none of the above actions are suitable. Requires a "request" parameter with the original user command.
 
     Example response formats:
     {{"action": "close_window", "params": {{"window_name": "Firefox"}}}}
@@ -518,6 +519,7 @@ def process_command(command, max_retries=1):
     {{"action": "generate_and_save_code", "params": {{"language": "python", "code_description": "A function to calculate fibonacci numbers"}}}}
     {{"action": "generate_powerpoint", "params": {{"title": "Automated Presentation"}}}}
     {{"action": "no_action", "response": "Hello! How can I assist you with UI automation today?"}}
+    {{"action": "process_request", "params": {{"request": "Original user command that doesn't fit other actions"}}}}
 
     For the generate_and_save_word_document action, provide a detailed, well-structured content for a Word document. The content should be rich, informative, and well-organized. Include appropriate headings, subheadings, and paragraphs. The content should be at least 500 words long and cover the topic comprehensively.
 
@@ -525,6 +527,7 @@ def process_command(command, max_retries=1):
     {{"action": "generate_and_save_word_document", "params": {{"content": "# Title of the Document\\n\\n## Introduction\\n[Detailed introduction paragraph]\\n\\n## Main Section 1\\n[Comprehensive content for section 1]\\n\\n### Subsection 1.1\\n[Detailed information for subsection 1.1]\\n\\n### Subsection 1.2\\n[Detailed information for subsection 1.2]\\n\\n## Main Section 2\\n[Comprehensive content for section 2]\\n\\n### Subsection 2.1\\n[Detailed information for subsection 2.1]\\n\\n### Subsection 2.2\\n[Detailed information for subsection 2.2]\\n\\n## Conclusion\\n[Detailed concluding paragraph]\\n\\n"}}}}
 
     Ensure that the generated content is relevant to the user's command, well-structured, and provides valuable information on the topic. The response should be a valid JSON object.
+    If none of the specific actions are suitable, use the "process_request" action with the original user command as the request parameter.
     """
 
     retries = 0
@@ -1035,6 +1038,8 @@ def execute_ui_action(action, params):
              return generate_and_save_word_document(params.get("content", ""))
         elif action == "generate_powerpoint":
             return generate_powerpoint(params.get("title"))
+        elif action == "process_request":
+            return automater.process_request(params.get("request"))
         else:
             return f"Unknown action: {action}"
     except Exception as e:
