@@ -278,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       ),
                                     ),
                                     Text(
-                                      "Welcome to WinAuto",
+                                      "Welcome to GemBot",
                                       style: TextStyle(
                                           color: Color(0x90FFFFFF),
                                           fontSize: 30.0,
@@ -542,7 +542,7 @@ class AboutUsPage extends StatelessWidget {
       'role': 'Developer',
       'image': 'assets/user.gif',
     },
-     {
+    {
       'name': 'Maheshwar Muthukumar',
       'role': 'Developer',
       'image': 'assets/user.gif',
