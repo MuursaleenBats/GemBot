@@ -7,6 +7,8 @@ flask-cors
 speechrecognition
 pyttsx3
 pywinauto
+Pillow==10.0.0
+pyautogui
 sentence-transformers
 scikit-learn
 numpy
