@@ -1,12 +1,20 @@
 google-generativeai
-nltk
-sentence-transformers
-speechrecognition
-PyAudio
-pyttsx3
 fuzzywuzzy
 python-Levenshtein
+winapps
 flask
+flask-cors
+speechrecognition
+pyttsx3
 pywinauto
+sentence-transformers
+scikit-learn
+numpy
+pywin32
 psutil
-pywhatkit
+python-docx
+python-pptx
+tkinter
+queue
+logging
+torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cpu 
