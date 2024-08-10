@@ -475,7 +475,7 @@ def get_file_extension(language):
 def process_command(command, max_retries=1):
     global is_blind_mode
     if not command.strip():
-        return "Empty command. Please provide a valid command."
+        return "I didn't catch that. Could you please repeat your command?"
     if "i am blind" in command.lower():
         is_blind_mode = True
         response = "Blind mode activated. All future prompts and responses will be read aloud."
@@ -534,47 +534,41 @@ def process_command(command, max_retries=1):
     while retries < max_retries:
         try:
             if "code" in prompt:
-                response= g_model.generate_content(prompt)
+                response = g_model.generate_content(prompt)
                 logging.info(f"Raw response from Gemini: {response.text}")
 
-                # Simplify JSON extraction
                 json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
                 if not json_match:
-                    raise ValueError("No JSON object found in the response")
+                    return "I'm having trouble understanding that request. Could you rephrase it?"
 
                 json_str = json_match.group(0)
 
             response = c_model.generate_content(prompt)
             logging.info(f"Raw response from Gemini: {response.text}")
 
-            # Simplify JSON extraction
             json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
             if not json_match:
-                raise ValueError("No JSON object found in the response")
+                return "I'm having trouble processing that request. Could you try again?"
 
             json_str = json_match.group(0)
 
-            # Escape control characters in the JSON string
             json_str = json_str.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
 
-            
-            # Validate the JSON format
             try:
                 action_data = json.loads(json_str)
             except json.JSONDecodeError as json_err:
-                # Ignore the JSON parsing error and return the original JSON string
                 logging.error(f"JSON parsing error: {str(json_err)}")
                 logging.error(f"Problematic JSON string: {json_str}")
-                return json_str
+                return "I encountered an issue while processing your request. Could you try rephrasing it?"
 
             if not isinstance(action_data, dict):
-                raise ValueError(f"Invalid response format. Expected a dictionary, got: {type(action_data)}")
+                return "I'm having trouble interpreting your request. Could you provide more details?"
 
             if "action" not in action_data:
-                raise ValueError(f"Invalid response from AI model. Missing 'action' key. Response: {action_data}")
+                return "I'm not sure what action to take. Could you be more specific?"
 
             if action_data["action"] == "no_action":
-                return action_data.get("response", "No action needed")
+                return action_data.get("response", "I'm not sure how to help with that. Could you clarify?")
 
             result = execute_ui_action(action_data["action"], action_data.get("params", {}))
 
@@ -584,7 +578,7 @@ def process_command(command, max_retries=1):
             return result
         except Exception as e:
             logging.error(f"Error in process_command: {str(e)}")
-            return f"An error occurred: {str(e)}"
+            return "I encountered an unexpected issue. Could you try your request again?"
         
 def generate_powerpoint(title):
     prompt = f"""
@@ -722,8 +716,8 @@ def generate_powerpoint(title):
 
         return "PowerPoint presentation generation initiated."
     except Exception as e:
-        print(f"Error in generate_powerpoint: {str(e)}")
-        return f"An error occurred while generating the PowerPoint presentation"
+        logging.error(f"Error in generate_powerpoint: {str(e)}")
+        return "I had trouble creating the PowerPoint presentation. Is Microsoft PowerPoint installed on your system?"
 
 
 def generate_and_save_word_document(content):
@@ -777,7 +771,7 @@ def generate_and_save_word_document(content):
         return "Word document generation initiated."
     except Exception as e:
         logging.error(f"Error generating and saving Word document: {str(e)}")
-        return f"Error generating and saving Word document"
+        return "I encountered an issue while creating the Word document. Do you have Microsoft Word installed and enough disk space?"
 
 
 def interact_with_control(params):
@@ -788,7 +782,7 @@ def interact_with_control(params):
     value = params.get("value")
 
     if not all([window_name, control_type, control_name, action]):
-        return "Missing required parameters for interact_with_control"
+        return "I need more information about the control you want to interact with. Could you provide more details?"
 
     try:
         app = Application(backend="uia").connect(title=window_name, timeout=10)
@@ -811,11 +805,11 @@ def interact_with_control(params):
         return f"Successfully performed {action} on {control_type} '{control_name}' in {window_name}"
     except Exception as e:
         logging.error(f"Error in interact_with_control: {str(e)}")
-        return f"Error interacting with control"
+        return f"I had trouble interacting with the {control_type} in {window_name}. Could you check if the window is open and try again?"
 
 def navigate_in_browser(browser_name, url, search_query=None):
     if not browser_name or not url:
-        return "Missing browser name or URL"
+        return "I need both a browser name and a URL to navigate. Could you provide both?"
 
     try:
         print("Listing all windows for debugging:")
@@ -868,7 +862,7 @@ def navigate_in_browser(browser_name, url, search_query=None):
         return f"Opened a new tab and navigated to {url} in {browser_name}"
     except Exception as e:
         logging.error(f"Error in navigate_in_browser: {str(e)}")
-        return f"Error navigating in browser"
+        return f"I couldn't navigate to the website in {browser_name}. Is the browser open and connected to the internet?"
 
 def get_current_file_explorer_path():
     try:
@@ -895,7 +889,7 @@ def file_explorer_operation(params):
     folder_path = params.get("folder_path")
 
     if not operation:
-        return "Missing operation"
+        return "I'm not sure what operation you want to perform in File Explorer. Could you specify?"
 
     try:
         if not folder_path:
@@ -921,14 +915,14 @@ def file_explorer_operation(params):
             return f"Unknown file explorer operation: {operation}"
     except Exception as e:
         logging.error(f"Error in file_explorer_operation: {str(e)}")
-        return f"Error in file explorer operation"
+        return f"I encountered an issue while trying to perform the {operation} in File Explorer. Could you check if the folder exists and try again?"
 
 def rename_files(explorer_window, params):
     file_pattern = params.get("file_pattern")
     new_name = params.get("new_name")
 
     if not file_pattern or not new_name:
-        return "Missing file pattern or new name"
+        return "I need both a file pattern and a new name to rename files. Could you provide both?"
 
     try:
         folder_path = get_current_file_explorer_path()
@@ -946,7 +940,7 @@ def rename_files(explorer_window, params):
         return f"Renamed files matching '{file_pattern}' to '{new_name}' in '{folder_path}'"
     except Exception as e:
         logging.error(f"Error in rename_files: {str(e)}")
-        return f"Error renaming files"
+        return "I had trouble renaming the files. Are you sure the files exist and you have permission to rename them?"
 
 def select_files(explorer_window, params):
     file_pattern = params.get("file_pattern")
@@ -1010,7 +1004,7 @@ def get_detailed_process_info(pid):
         return f"PID: {pid}, Name: {process.name()}, Exe: {exe_path}, Status: {process.status()}"
     except Exception as e:
         logging.error(f"Error in get_detailed_process_info: {str(e)}")
-        return f"Error getting process info for PID {pid}"
+        return f"I couldn't retrieve information for the process with PID {pid}. Is the process still running?"
     
 def execute_ui_action(action, params):
     try:
@@ -1044,7 +1038,8 @@ def execute_ui_action(action, params):
             return f"Unknown action: {action}"
     except Exception as e:
         logging.error(f"Error in execute_ui_action: {str(e)}")
-
+        return "I had trouble performing that action. Could you try again or rephrase your request?"
+    
 def extract_url(text):
     url_pattern = re.compile(r"[a-zA-Z0-9.-]+\.(com|org|net|edu|gov)")
     match = url_pattern.search(text)
