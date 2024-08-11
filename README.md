@@ -58,7 +58,7 @@ Here are some practical examples of how you can use Gembot:
   - "Install Notepad++"
 
 - **Voice Interaction**:
-  - "Activate Blind Mode" (to interact with TTS).
+  - "I am Blind" (to interact with TTS).
   - "Gemini"(Keyword to Start Listening)
 
 ---
