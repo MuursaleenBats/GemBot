@@ -16,7 +16,5 @@ pywin32
 psutil
 python-docx
 python-pptx
-tkinter
-queue
-logging
+tk
 python-dotenv
