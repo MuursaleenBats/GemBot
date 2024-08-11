@@ -24,7 +24,7 @@ llm/
 *.iws
 .idea/
 ./backup
-
+.venv
 # Visual Studio Code related
 .classpath
 .project

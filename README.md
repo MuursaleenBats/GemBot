@@ -27,7 +27,14 @@ Follow these steps to install and set up Gembot:
 ```bash
 pip install -r requirements.txt
 ```
-2. **Setup Dart**:
+
+2. **Install torch**:
+```bash
+pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cpu 
+```
+Install this version of torch as newer version is incompatible with newer python version.
+
+3. **Setup Dart**:
 - Download and install the Dart SDK from the [official Dart website](https://dart.dev/get-dart).
 - Add Dart to your system's PATH.
 - Verify the installation:
@@ -35,12 +42,12 @@ pip install -r requirements.txt
 dart --version
 ```
 
-3. **Install ThunderClient** (for VS Code users):
+4. **Install ThunderClient** (for VS Code users):
 - Open VS Code Extensions view (Ctrl+Shift+X).
 - Search for "ThunderClient".
 - Click Install.
 
-4. **Create .env**:
+5. **Create .env**:
 - Create .env file in root directory of Project.
 - Set your Gemini Api Key as API_KEY="your api key".
 - Save .env.
@@ -48,7 +55,7 @@ dart --version
 API_KEY="your api key"
 ```
 
-5. **Run the Flutter App**:
+6. **Run the Flutter App**:
 ```bash
 flutter pub get
 flutter run
