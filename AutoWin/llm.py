@@ -1,11 +1,13 @@
 from pathlib import Path
 from typing import Any
-
+import os
 from AutoWin.models.factory import ModelFactory
 from AutoWin.utils import local_info
 from AutoWin.utils.screen import Screen
 from AutoWin.utils.settings import Settings
+from dotenv import load_dotenv
 
+load_dotenv()
 DEFAULT_MODEL_NAME = 'gpt-4o'
 
 
@@ -52,7 +54,7 @@ class LLM:
     def __init__(self):
         self.settings_dict: dict[str, str] = Settings().get_dict()
         self.model_name = "gemini-1.5-pro-exp-0801"
-        self.api_key = "AIzaSyDsTNYvMqYM-LAGUd8fB12rWzVixDsU914"
+        self.api_key = os.getenv("API_KEY")
         context = self.read_context_txt_file()
 
         self.model = ModelFactory.create_model(self.model_name,self.api_key, context)
