@@ -1,10 +1,10 @@
-# GemBot
+# Gembot
 
 Gembot is not just another desktop application—it's your ultimate productivity companion, designed to revolutionize the way you interact with your computer. With cutting-edge voice command automation and a user-friendly interface, Gembot takes the hassle out of everyday tasks, empowering you to focus on what truly matters.
 
 ## Introduction
 
-Gembot was meticulously crafted for Windows users who demand efficiency and speed in their daily workflows. Whether you're a developer, a business professional, or a casual user, Gembot has something to offer, making it an indispensable tool on your desktop.
+Gembot was meticulously crafted over a span of two months for Windows users who demand efficiency and speed in their daily workflows. Whether you're a developer, a business professional, or a casual user, Gembot has something to offer, making it an indispensable tool on your desktop.
 
 Key features include:
 
@@ -59,7 +59,7 @@ Here are some practical examples of how you can use Gembot:
 
 - **Voice Interaction**:
   - "I am Blind" (to interact with TTS).
-  - "Gemini"(Keyword to Start Listening)
+  - "Gemini" (Keyword to Start Listening)
 
 ---
 
