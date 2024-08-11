@@ -45,12 +45,7 @@ Install this version of torch as newer version is incompatible with newer python
 dart --version
 ```
 
-4. **Install ThunderClient** (for VS Code users):
-- Open VS Code Extensions view (Ctrl+Shift+X).
-- Search for "ThunderClient".
-- Click Install.
-
-5. **Create .env**:
+4. **Create .env**:
 - Create .env file in root directory of Project.
 - Set your Gemini Api Key as API_KEY="your api key".
 - Save .env.
@@ -58,7 +53,7 @@ dart --version
 API_KEY="your api key"
 ```
 
-6. **Run the Flutter App**:
+5. **Run the Flutter App**:
 ```bash
 flutter pub get
 flutter run
