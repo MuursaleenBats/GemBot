@@ -4,7 +4,7 @@ Gembot is your ultimate productivity companion, designed to revolutionize the wa
 
 ## Introduction
 
-Gembot was meticulously crafted over a span of two months for Windows users who demand efficiency and speed in their daily workflows. Whether you're a developer, a business professional, or a casual user, Gembot has something to offer, making it an indispensable tool on your desktop.
+Gembot was meticulously crafted over a span of two months for Windows users who demand efficiency and speed in their daily workflows. Whether you're a developer, a business professional, or a casual user, Gembot has something to offer, making it an indispensable tool on your desktop
 
 ## Key Features
 
@@ -106,4 +106,4 @@ If you encounter any problems or have any questions, please open an issue in thi
 
 ---
 
-Gembot isn't just another tool; it's the next big thing in desktop automation, designed to make your digital life smoother, faster, and more enjoyable. With features like Blind Mode and powerful voice command capabilities, Gembot is committed to being inclusive, making technology accessible to everyone.
+Gembot isn't just another tool; it's the next big thing in desktop automation, designed to make your digital life smoother, faster, and more enjoyable. With features like Blind Mode and powerful voice command capabilities, Gembot is committed to being inclusive, making technology accessible to everyone
