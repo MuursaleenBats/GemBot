@@ -95,6 +95,6 @@ class AppInstaller:
             if success:
                 return f"{closest_match} installation process completed."
             else:
-                return f"Failed to install {closest_match}. Please check the PowerShell script and try again."
+                return f"You've cancelled saving the installation. Let me know if you want to install it later."
         else:
             return f"No close match found for '{user_input}'. Please check the application name and try again."

@@ -54,21 +54,6 @@ latest_status = "No updates"
 # Event to signal when new status is available
 status_event = threading.Event()
 installer = AppInstaller()
-# Load datasets
-with open('app_name.json', 'r') as file:
-    apps_to_check = json.load(file)
-
-with open('installation_list.json', 'r') as file:
-    install_list = json.load(file)
-
-# Function dataset
-functions = {
-    "Open website in chrome": "open_website_in_chrome",
-    "Start application": "start_application",
-    "Install app": "install_application",
-    "Close window": "close_window_function",
-    "Generate code": "generate_and_save_code"
-}
 
 model = SentenceTransformer('all-MiniLM-L6-v2')  # Load the model once
 
@@ -279,31 +264,6 @@ def install_application(code):
         return "The installation process has started. It may take a few minutes to complete."
     except subprocess.CalledProcessError as e:
         return f"I encountered an issue while trying to install the application. Could you check your internet connection and try again?"
-
-def compute_similarity(user_input, items):
-    user_input_embedding = model.encode([user_input])
-    items_embeddings = model.encode(items)
-    similarities = cosine_similarity(user_input_embedding, items_embeddings)[0]
-    most_similar_index = similarities.argmax()
-    return items[most_similar_index], similarities[most_similar_index]
-
-def find_most_similar_app(user_input):
-    app_names = list(apps_to_check.keys())
-    most_similar_app, similarity_score = compute_similarity(user_input, app_names)
-    most_similar_exe = apps_to_check[most_similar_app]
-    return most_similar_app, most_similar_exe
-
-def find_installation(user_input):
-    install_names = list(install_list.keys())
-    most_similar_key, similarity_score = compute_similarity(user_input, install_names)
-    code = install_list[most_similar_key]
-    return code
-
-def find_most_similar_function(user_input):
-    function_descriptions = list(functions.keys())
-    most_similar_function, similarity_score = compute_similarity(user_input, function_descriptions)
-    function_name = functions[most_similar_function]
-    return function_name, similarity_score
 
 def open_website_in_chrome(url):
     chrome_path = get_app_path("chrome")
