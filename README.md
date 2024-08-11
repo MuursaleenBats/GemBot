@@ -45,34 +45,37 @@ pip install -r requirements.txt
 flutter pub get
 flutter run
 ```
-## Usage Examples
+## Useful Prompts
+
+Here are some practical examples of how you can use Gembot:
 
 - **Open Applications**: 
-- "Open Chrome"
-- "Start Visual Studio Code"
+  - "Open Chrome."
+  - "Start Visual Studio Code."
+  - "Open PowerPoint."
 
 - **Browsing the Web**: 
-- "Open YouTube in Chrome"
-- "Open Amazon.in in Chrome"
+  - "Open YouTube in Chrome."
+  - "Open Amazon.in in Chrome"
 
 - **File Management**: 
-- "Create a new folder in Documents named 'Gembot Projects'"
+  - "Create a new folder in Documents named 'Gembot Projects'."
 
 - **Document Creation**:
-- "Generate a Word document with an essay on wildlife"
-- "Create a PowerPoint presentation on climate change"
+  - "Generate a Word document with an essay on wildlife."
+  - "Create a PowerPoint presentation on climate change."
 
 - **Code Generation**:
-- "Generate a Python code for prime numbers from 1 to 100"
-- "Write a Java code snippet to calculate the factorial of a number"
+  - "Generate a Python code for prime numbers from 1 to 100."
+  - "Write a Java code snippet to calculate the factorial of a number."
 
 - **Software Installation**:
-- "Install Zoom"
-- "Install Notepad++"
+  - "Install Zoom."
+  - "Install Notepad++"
 
 - **Voice Interaction**:
-- "I am Blind" (to interact with TTS)
-- "Gemini" (Keyword to Start Listening)
+  - "I am Blind" (to interact with TTS).
+  - "Gemini" (Keyword to Start Listening)
 
 ## Technology Stack
 
