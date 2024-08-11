@@ -241,7 +241,7 @@ def start_application(app_name):
         for app_name in app_names:
             try:
                 app_open(app_name, match_closest=True)
-                print(f"Opening {app_name}...")
+                return f"I've started {app_name} for you."
             except Exception as e:
                 print(f"appopener failed to open {app_name}: {e}")
                 suggestions = suggest_apps(app_name, installed_apps)
@@ -267,18 +267,18 @@ def start_application(app_name):
                             print(f"Opening {app_info.name} using uninstall string...")
                         except Exception as e:
                             print(f"Error opening {app_info.name} using uninstall string: {e}")
+                            return f"I'm sorry, I couldn't find {app_name} on your system. Could you check the spelling or try another app?"
                     else:
-                        print(f"Application '{app_name}' not found. Please make sure the name is correct.")
-
-    open_app([app_name])
-    return f"Started {app_name}"
+                        return f"I'm sorry, I couldn't find {app_name} on your system. Could you check the spelling or try another app?"
+                        
+    return open_app([app_name])
 
 def install_application(code):
     try:
         result = subprocess.run(f'powershell -Command "{code}"', shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return result.stdout.decode()
+        return "The installation process has started. It may take a few minutes to complete."
     except subprocess.CalledProcessError as e:
-        return f"Failed to install application."
+        return f"I encountered an issue while trying to install the application. Could you check your internet connection and try again?"
 
 def compute_similarity(user_input, items):
     user_input_embedding = model.encode([user_input])
@@ -310,11 +310,11 @@ def open_website_in_chrome(url):
     if chrome_path:
         try:
             app = Application().start(f'"{chrome_path}" {url}')
-            return f"Opened {url} in Google Chrome."
+            return f"I've opened {url} in Google Chrome for you."
         except Exception as e:
-            return f"Failed to open website in Chrome."
+            return f"I had trouble opening the website. Is Chrome running properly?"
     else:
-        return "Google Chrome not found."
+        return "I couldn't find Google Chrome on your system. Is it installed?"
 
 def send_to_gemini(command, model):
     try:
@@ -375,15 +375,13 @@ def close_window_function(partial_name):
                 hwnd = result[0]
                 try:
                     win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
-                    return f"Sent close command to window: {full_name}"
+                    return f"I've closed the window '{full_name}' for you."
                 except Exception as e:
-                    return f"Error while trying to close window {full_name}"
+                    return f"I had trouble closing the window. Could you try closing it manually?"
             else:
-                return f"Found window in list, but couldn't interact with it: {full_name}"
+                return f"I found multiple windows matching '{partial_name}'. Could you be more specific?"
         else:
-            return f"Multiple matching windows found: {', '.join(matching_windows)}. Please be more specific."
-    else:
-        return f"No windows found matching: {partial_name}. Available windows: {', '.join(list_windows())}"
+            return f"I couldn't find any windows matching '{partial_name}'. Is the window open?"
 
 def generate_and_save_code(user_input, model):
     language = extract_language(user_input)
@@ -434,7 +432,7 @@ def generate_and_save_code(user_input, model):
                 result = subprocess.run([sys.executable, file_path], capture_output=True, text=True, timeout=10)
                 print("Output:")
                 print(result.stdout)
-                result_output = f"Output: {result.stdout}"
+                result_output = f"Code: {generated_code} \nOutput: {result.stdout}"
                 if result.stderr:
                     print("Errors:")
                     print(result.stderr)
@@ -702,12 +700,12 @@ def generate_powerpoint(title):
             )
 
             if not file_path:  # User cancelled
-                print("File save cancelled.")
+                return "You've cancelled saving the presentation. Let me know if you want to save it later."
                 return None
 
             prs.save(file_path)
             print(f"Generated PowerPoint presentation saved to {file_path}")
-            return f"Generated PowerPoint presentation saved to {file_path}"
+            return f"I've saved the PowerPoint presentation for you. You can find it at {file_path}"
 
         # Add the save_presentation function to the queue
         tk_queue.put((save_presentation, (), {}))
@@ -963,7 +961,7 @@ def navigate_to_folder(explorer_window, params):
     target_folder = params.get("target_folder")
 
     if not target_folder:
-        return "Missing target folder"
+        return "I need to know which folder you want to navigate to. Could you specify the folder path?"
 
     try:
         explorer_window.set_focus()
@@ -974,19 +972,19 @@ def navigate_to_folder(explorer_window, params):
         send_keys(target_folder + '{ENTER}')
         time.sleep(2)  # Wait for the folder to load
 
-        return f"Navigated to folder: {target_folder}"
+        return f"I've navigated to the folder: {target_folder}"
     except Exception as e:
         logging.error(f"Error in navigate_to_folder: {str(e)}")
-        return f"Error navigating to folder"
+        return f"I had trouble navigating to {target_folder}. Does this folder exist on your system?"
 
 def list_processes():
     processes = []
     for proc in psutil.process_iter(['pid', 'name', 'status']):
         try:
-            processes.append(f"PID: {proc.info['pid']}, Name: {proc.info['name']}, Status: {proc.info['status']}")
+            processes.append(f"Process: {proc.info['name']}, Status: {proc.info['status']}")
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
-    return processes
+    return "Here are the currently running processes:\n" + "\n".join(processes[:20]) + "\n(Showing first 20 processes)"
 
 def get_process_info(pid):
     try:
