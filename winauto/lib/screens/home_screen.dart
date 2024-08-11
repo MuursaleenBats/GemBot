@@ -170,21 +170,28 @@ class _HomeScreenState extends State<HomeScreen>
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: Text(
-                            "Guide",
+                            "Instructions",
                           ),
                           content: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                "1. ",
+                                "1. After calling gemini, application will listen for your command for 5 seconds",
                                 textAlign: TextAlign.left,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               Text(
-                                "2. ",
+                                "2. It could happen that command was not recieved properly, in which case try to say the command again",
+                                textAlign: TextAlign.left,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                "3. While giving the command, try to be as specific as possible",
                                 textAlign: TextAlign.left,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
