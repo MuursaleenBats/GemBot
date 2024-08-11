@@ -40,7 +40,15 @@ dart --version
 - Search for "ThunderClient".
 - Click Install.
 
-4. **Run the Flutter App**:
+4. **Create .env**:
+- Create .env file in root directory of Project.
+- Set your Gemini Api Key as API_KEY="your api key".
+- Save .env.
+```
+API_KEY="your api key"
+```
+
+5. **Run the Flutter App**:
 ```bash
 flutter pub get
 flutter run
