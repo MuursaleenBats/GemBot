@@ -23,6 +23,7 @@ llm/
 *.ipr
 *.iws
 .idea/
+./backup
 
 # Visual Studio Code related
 .classpath
