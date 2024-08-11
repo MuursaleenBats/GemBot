@@ -31,9 +31,9 @@ pip install -r requirements.txt
 - Download and install the Dart SDK from the [official Dart website](https://dart.dev/get-dart).
 - Add Dart to your system's PATH.
 - Verify the installation:
-  ```
-  dart --version
-  ```
+```
+dart --version
+```
 
 3. **Install ThunderClient** (for VS Code users):
 - Open VS Code Extensions view (Ctrl+Shift+X).
