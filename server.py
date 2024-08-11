@@ -37,12 +37,9 @@ from docx.shared import Pt
 from pptx import Presentation
 from pptx.util import Inches, Pt
 
-# sab changa si
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 tk_queue = queue.Queue()
-#os.environ["API_KEY"] = "AIzaSyDotpLkQRPyzTj-flWGHNjbXFiHoJu2DFw" abizer
-os.environ["API_KEY"] = "AIzaSyBqBGn1cOhpBG_mcAQbZnGgLdTL29X0nVk" #mursaleen
 genai.configure(api_key=os.environ["API_KEY"])
 g_model = genai.GenerativeModel('gemini-1.5-pro')
 c_model = genai.GenerativeModel('gemini-1.5-pro',  generation_config={"response_mime_type": "application/json"})
