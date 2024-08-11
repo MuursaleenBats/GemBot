@@ -1,65 +1,90 @@
 # Gembot
 
-Gembot is not just another desktop application—it's your ultimate productivity companion, designed to revolutionize the way you interact with your computer. With cutting-edge voice command automation and a user-friendly interface, Gembot takes the hassle out of everyday tasks, empowering you to focus on what truly matters.
+Gembot is your ultimate productivity companion, designed to revolutionize the way you interact with your computer. With cutting-edge voice command automation and a user-friendly interface, Gembot takes the hassle out of everyday tasks, empowering you to focus on what truly matters.
 
 ## Introduction
 
 Gembot was meticulously crafted over a span of two months for Windows users who demand efficiency and speed in their daily workflows. Whether you're a developer, a business professional, or a casual user, Gembot has something to offer, making it an indispensable tool on your desktop.
 
-Key features include:
+## Key Features
 
 - **Opening Applications**: Seamlessly launch any application on your system with a single command.
-- **Installing Applications**: Automate the entire installation process for new software, saving you time and effort.
-- **Generating Code**: Create clean, efficient code snippets in various programming languages, ready to be used in your projects.
-- **Document Creation**: Instantly generate polished Word documents and PowerPoint presentations on any topic, with automatic saving.
-- **File Management**: Effortlessly open folder locations, rename files, and organize your documents—all through voice commands.
+- **Installing Applications**: Automate the entire installation process for new software.
+- **Generating Code**: Create clean, efficient code snippets in various programming languages.
+- **Document Creation**: Instantly generate polished Word documents and PowerPoint presentations.
+- **File Management**: Effortlessly manage your files through voice commands.
+- **Voice Command Control**: Control your computer with voice commands.
+- **Python Code Execution**: Run Python scripts directly from Gembot.
+- **Voice-Based Activation**: Activate Gembot by saying "Gemini".
+- **Browser Navigation**: Control your web browser with voice commands.
+- **Blind Mode**: Enables visually impaired users to interact with the application effortlessly.
 
-At the heart of Gembot are **Gemini** and **pywinauto**. Gemini interprets your commands and intelligently guides pywinauto to execute the right actions, whether it's generating content, managing files, or automating tasks. This synergy makes Gembot not only powerful but also incredibly intuitive.
+## Installation
 
-## Enhanced Features
+Follow these steps to install and set up Gembot:
 
-- **Voice Command Control**: Gembot listens to your commands and acts immediately, from launching apps to managing files and browsing the web.
-- **Start Applications**: Forget searching through menus—start any application instantly with a simple voice command.
-- **Install Applications**: Simplify software installation with Gembot's voice-activated automation.
-- **Python Code Execution**: Run Python scripts directly from Gembot. Whether you're testing code snippets or running full scripts, Gembot handles it all effortlessly.
-- **Voice-Based Activation**: Say "Gemini" to activate the assistant, ready to take your next command, making the experience hands-free.
-- **Navigating Browser**: Take control of your web browser with voice commands—open YouTube videos, search the web, or browse specific sites without lifting a finger.
-- **File Management**: Open, rename, and organize your files with unparalleled ease, all through simple voice commands.
-- **Document and Presentation Creation**: Generate comprehensive Word documents and professional PowerPoint presentations on any given topic, automatically formatted and saved.
-- **Code Generation**: Write and save code in various programming languages without even opening your editor.
-- **Blind Mode**: Gembot's Blind Mode enables visually impaired users to interact with the application effortlessly. With voice feedback and intuitive navigation, Gembot ensures that everyone, regardless of visual ability, can harness the full power of the application.
+1. **Install Requirements**:
+```bash
+pip install -r requirements.txt
+```
+2. **Setup Dart**:
+- Download and install the Dart SDK from the [official Dart website](https://dart.dev/get-dart).
+- Add Dart to your system's PATH.
+- Verify the installation:
+  ```
+  dart --version
+  ```
 
-## Useful Prompts
+3. **Install ThunderClient** (for VS Code users):
+- Open VS Code Extensions view (Ctrl+Shift+X).
+- Search for "ThunderClient".
+- Click Install.
 
-Here are some practical examples of how you can use Gembot:
+4. **Run the Flutter App**:
+```bash
+flutter pub get
+flutter run
+```
+## Usage Examples
 
 - **Open Applications**: 
-  - "Open Chrome."
-  - "Start Visual Studio Code."
-  - "Open PowerPoint."
+- "Open Chrome"
+- "Start Visual Studio Code"
 
 - **Browsing the Web**: 
-  - "Open YouTube in Chrome."
-  - "Open Amazon.in in Chrome"
+- "Open YouTube in Chrome"
+- "Open Amazon.in in Chrome"
 
 - **File Management**: 
-  - "Create a new folder in Documents named 'Gembot Projects'."
+- "Create a new folder in Documents named 'Gembot Projects'"
 
 - **Document Creation**:
-  - "Generate a Word document with an essay on wildlife."
-  - "Create a PowerPoint presentation on climate change."
+- "Generate a Word document with an essay on wildlife"
+- "Create a PowerPoint presentation on climate change"
 
 - **Code Generation**:
-  - "Generate a Python code for prime numbers from 1 to 100."
-  - "Write a Java code snippet to calculate the factorial of a number."
+- "Generate a Python code for prime numbers from 1 to 100"
+- "Write a Java code snippet to calculate the factorial of a number"
 
 - **Software Installation**:
-  - "Install Zoom."
-  - "Install Notepad++"
+- "Install Zoom"
+- "Install Notepad++"
 
 - **Voice Interaction**:
-  - "I am Blind" (to interact with TTS).
-  - "Gemini" (Keyword to Start Listening)
+- "I am Blind" (to interact with TTS)
+- "Gemini" (Keyword to Start Listening)
+
+## Technology Stack
+
+Gembot leverages the power of **Gemini** for interpreting commands and **pywinauto** for executing actions, creating a powerful synergy that makes Gembot both powerful and intuitive.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+
+If you encounter any problems or have any questions, please open an issue in this repository.
 
 ---
 
