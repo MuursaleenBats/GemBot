@@ -22,7 +22,7 @@ At the heart of Gembot are **Gemini** and **pywinauto**. Gemini interprets your 
 - **Start Applications**: Forget searching through menus—start any application instantly with a simple voice command.
 - **Install Applications**: Simplify software installation with Gembot's voice-activated automation.
 - **Python Code Execution**: Run Python scripts directly from Gembot. Whether you're testing code snippets or running full scripts, Gembot handles it all effortlessly.
-- **Voice-Based Activation**: Say "Hey Gembot" to activate the assistant, ready to take your next command, making the experience hands-free.
+- **Voice-Based Activation**: Say "Gemini" to activate the assistant, ready to take your next command, making the experience hands-free.
 - **Navigating Browser**: Take control of your web browser with voice commands—open YouTube videos, search the web, or browse specific sites without lifting a finger.
 - **File Management**: Open, rename, and organize your files with unparalleled ease, all through simple voice commands.
 - **Document and Presentation Creation**: Generate comprehensive Word documents and professional PowerPoint presentations on any given topic, automatically formatted and saved.
