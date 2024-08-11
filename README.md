@@ -59,7 +59,7 @@ Here are some practical examples of how you can use Gembot:
 
 - **Voice Interaction**:
   - "Activate Blind Mode" (to interact with TTS).
-  - "Gembot"(Keyword to Start Listening)
+  - "Gemini"(Keyword to Start Listening)
 
 ---
 
