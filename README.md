@@ -4,7 +4,7 @@ Gembot is your ultimate productivity companion, designed to revolutionize the wa
 
 ## Video
 
-https://github.com/user-attachments/assets/f4e16c54-caf1-40be-a68b-76ba51b90496
+https://github.com/user-attachments/assets/738d42c1-931c-41a5-b37a-3dd5e748e630
 
 
 ## Introduction
