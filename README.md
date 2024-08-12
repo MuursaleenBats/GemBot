@@ -21,6 +21,7 @@ Gembot was meticulously crafted over a span of two months for Windows users who 
 - **Voice-Based Activation**: Activate Gembot by saying "Gemini".
 - **Browser Navigation**: Control your web browser with voice commands.
 - **Blind Mode**: Enables visually impaired users to interact with the application effortlessly.
+- **Screen Reader**: Enables User's to Understand what Apps and Data is opened on the Screen.
 
 ## Installation
 
@@ -66,6 +67,11 @@ Here are some practical examples of how you can use Gembot:
   - "Open Chrome."
   - "Start Visual Studio Code."
   - "Open PowerPoint."
+
+- **What's on my Screen**: 
+  - "What is the Content of Chrome on my Screen?"
+  - "What's on my Screen?"
+  - "Which App can Perform Code Editing on my Screen"
 
 - **Browsing the Web**: 
   - "Open YouTube in Chrome."
