@@ -2,8 +2,10 @@
 
 Gembot is your ultimate productivity companion, designed to revolutionize the way you interact with your computer. With cutting-edge voice command automation and a user-friendly interface, Gembot takes the hassle out of everyday tasks, empowering you to focus on what truly matters.
 
-## Youtube Video
-[<img src="https://i.ytimg.com/vi/Nsrf9UXv2M0/maxresdefault.jpg" width="50%">](https://www.youtube.com/watch?v=Nsrf9UXv2M0 "GemBot: Your voice-powered assistant for seamless productivity")
+## Video
+
+https://github.com/user-attachments/assets/f4e16c54-caf1-40be-a68b-76ba51b90496
+
 
 ## Introduction
 
