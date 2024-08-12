@@ -36,6 +36,9 @@ from docx import Document
 from docx.shared import Pt
 from pptx import Presentation
 from pptx.util import Inches, Pt
+import pyautogui
+from PIL import Image, ImageEnhance, ImageDraw
+from typing import Optional
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -173,6 +176,79 @@ def speak_text(text):
     
     engine.say(text)
     engine.runAndWait()
+
+def capture_high_quality_screenshot(
+    enhancement_factor: float = 2.0,
+    save_path: str = "high_quality_screenshot.png"
+) -> Image.Image:
+    """
+    Capture a high-quality screenshot of the entire screen.
+    """
+    try:
+        # Capture full screen
+        screenshot = pyautogui.screenshot()
+        img_array = np.array(screenshot)
+
+        # Convert to high color depth
+        img = Image.fromarray(img_array).convert('RGB')
+
+        # Enhance image quality
+        img = ImageEnhance.Sharpness(img).enhance(enhancement_factor)
+        img = ImageEnhance.Contrast(img).enhance(enhancement_factor)
+        img = ImageEnhance.Brightness(img).enhance(1.2)  # Slight brightness boost
+
+        # Save high-quality screenshot
+        img.save(save_path, format='PNG', quality=95, optimize=True)
+        logging.info(f"High-quality screenshot saved to {save_path}")
+
+        return img
+
+    except Exception as e:
+        logging.error(f"Error in capture_high_quality_screenshot: {str(e)}")
+        raise
+
+def analyze_screenshot_with_gemini(
+    user_prompt: str,
+    model: genai.GenerativeModel,
+    screenshot_path: str = "high_quality_screenshot.png",
+    max_retries: int = 3
+) -> Optional[str]:
+    """
+    Analyze the high-quality screenshot using Gemini based on the user's prompt.
+    """
+    for attempt in range(max_retries):
+        try:
+            screenshot = genai.upload_file(path=screenshot_path, display_name="High-Quality Screenshot")
+
+            detailed_prompt = f"""
+            Analyze the provided high-quality screenshot and give a concise, human-like description based on the following user prompt:
+
+            {user_prompt}
+
+            Guidelines for your response:
+            1. Identify the most prominent or important window or application on the screen.
+            2. Describe this main window or application in more detail, focusing on its key features and content.
+            3. Briefly mention other significant windows or applications that are visible, but don't go into detail about them.
+            4. If there's a GemBot window visible, just mention its presence without elaborating.
+            5. Based on what you see, give a general sense of what the user might be doing or working on.
+            6. Don't mention Screenshot and try to just repond as On your current Screen.
+
+            Use natural, conversational language as if you're casually describing the screen to a friend. Keep your description brief but informative, highlighting only the most relevant aspects.
+
+            If the user's prompt asks for specific information, prioritize addressing that in your response.
+            """
+
+            response = model.generate_content([screenshot, detailed_prompt])
+            return response.text
+
+        except Exception as e:
+            logging.error(f"Attempt {attempt + 1} failed in analyze_screenshot_with_gemini: {str(e)}")
+            if attempt == max_retries - 1:
+                logging.error("Max retries reached. Unable to complete screenshot analysis.")
+                return None
+
+    return None
+
 
 def listen_for_command(timeout=8):
     global is_blind_mode
@@ -441,49 +517,41 @@ def process_command(command, max_retries=1):
         speak_text(f"You said: {command}")
 
     prompt = f"""
-    Given the user command: "{command}"
-    Generate a JSON response with the appropriate UI action and parameters.
-    Possible actions are:
-    1. close_window: Requires a "window_name" parameter
-    2. list_windows: No parameters required
-    3. interact_with_control: Requires "window_name", "control_type", "control_name", and "action" parameters
-    4. navigate_in_browser: Requires "browser_name" and "url" parameters
-    5. file_explorer_operation: Requires "operation" and additional parameters based on the operation
-    6. list_processes: No parameters required
-    7. get_process_info: Requires a "pid" parameter
-    8. open_website_in_chrome: Requires a "url" parameter
-    9. start_application: Requires an "app_name" parameter
-    10. install_application: Requires an "app_name" parameter
-    11. generate_and_save_code: Requires a "language" and "code_description" parameter
-    12. generate_and_save_word_document: Requires a "content" parameter
-    13. generate_powerpoint: Requires "title"
-    14. no_action: Use this if no UI action is needed
-    15. process_request: Use this if none of the above actions are suitable. Requires a "request" parameter with the original user command.
+Given the user command: "{command}"
+Generate a JSON response with the appropriate UI action and parameters.
+Possible actions are:
+1. close_window: Requires a "window_name" parameter
+2. list_windows: No parameters required
+3. interact_with_control: Requires "window_name", "control_type", "control_name", and "action" parameters
+4. navigate_in_browser: Requires "browser_name" and "url" parameters
+5. file_explorer_operation: Requires "operation" and additional parameters based on the operation
+6. list_processes: No parameters required
+7. get_process_info: Requires a "pid" parameter
+8. open_website_in_chrome: Requires a "url" parameter
+9. start_application: Requires an "app_name" parameter
+10. install_application: Requires an "app_name" parameter
+11. generate_and_save_code: Requires a "language" and "code_description" parameter
+12. generate_and_save_word_document: Requires a "content" parameter
+13. generate_powerpoint: Requires "title"
+14. screenanalysis: Requires a "user_prompt" parameter for analyzing the screenshot
+15. no_action: Use this if no UI action is needed and the command is general conversation
+16. process_request: Use this ONLY if the command implies a specific action that doesn't match any of the above actions. Requires a "request" parameter with the original user command.
 
-    Example response formats:
-    {{"action": "close_window", "params": {{"window_name": "Firefox"}}}}
-    {{"action": "list_windows"}}
-    {{"action": "interact_with_control", "params": {{"window_name": "Notepad", "control_type": "Edit", "control_name": "Text Editor", "action": "type_keys", "value": "Hello, World!"}}}}
-    {{"action": "navigate_in_browser", "params": {{"browser_name": "Chrome", "url": "https://www.example.com"}}}}
-    {{"action": "file_explorer_operation", "params": {{"operation": "rename_files", "folder_path": "C:/Users/YourName/Documents", "file_pattern": "*.txt", "new_name": "renamed_{{index}}.txt"}}}}
-    {{"action": "list_processes"}}
-    {{"action": "get_process_info", "params": {{"pid": 1234}}}}
-    {{"action": "open_website_in_chrome", "params": {{"url": "https://www.example.com"}}}}
-    {{"action": "start_application", "params": {{"app_name": "winword.exe"}}}}
-    {{"action": "install_application", "params": {{"app_name": "Chrome"}}}}
-    {{"action": "generate_and_save_code", "params": {{"language": "python", "code_description": "A function to calculate fibonacci numbers"}}}}
-    {{"action": "generate_powerpoint", "params": {{"title": "Automated Presentation"}}}}
-    {{"action": "no_action", "response": "Hello! How can I assist you with UI automation today?"}}
-    {{"action": "process_request", "params": {{"request": "Original user command that doesn't fit other actions"}}}}
+IMPORTANT: Only use the "process_request" action if the user's command clearly implies a specific action or task that doesn't fit into any of the other predefined actions. For general conversation, questions, or when no specific action is required, use the "no_action" response instead.
 
-    For the generate_and_save_word_document action, provide a detailed, well-structured content for a Word document. The content should be rich, informative, and well-organized. Include appropriate headings, subheadings, and paragraphs. The content should be at least 500 words long and cover the topic comprehensively.
+For the generate_and_save_word_document action, provide a detailed, well-structured content for a Word document. The content should be rich, informative, and well-organized. Include appropriate headings, subheadings, and paragraphs. The content should be at least 500 words long and cover the topic comprehensively.
 
-    Example response format for generate_and_save_word_document:
-    {{"action": "generate_and_save_word_document", "params": {{"content": "# Title of the Document\\n\\n## Introduction\\n[Detailed introduction paragraph]\\n\\n## Main Section 1\\n[Comprehensive content for section 1]\\n\\n### Subsection 1.1\\n[Detailed information for subsection 1.1]\\n\\n### Subsection 1.2\\n[Detailed information for subsection 1.2]\\n\\n## Main Section 2\\n[Comprehensive content for section 2]\\n\\n### Subsection 2.1\\n[Detailed information for subsection 2.1]\\n\\n### Subsection 2.2\\n[Detailed information for subsection 2.2]\\n\\n## Conclusion\\n[Detailed concluding paragraph]\\n\\n"}}}}
+Example response format for generate_and_save_word_document:
+{{"action": "generate_and_save_word_document", "params": {{"content": "# Title of the Document\\n\\n## Introduction\\n[Detailed introduction paragraph]\\n\\n## Main Section 1\\n[Comprehensive content for section 1]\\n\\n### Subsection 1.1\\n[Detailed information for subsection 1.1]\\n\\n### Subsection 1.2\\n[Detailed information for subsection 1.2]\\n\\n## Main Section 2\\n[Comprehensive content for section 2]\\n\\n### Subsection 2.1\\n[Detailed information for subsection 2.1]\\n\\n### Subsection 2.2\\n[Detailed information for subsection 2.2]\\n\\n## Conclusion\\n[Detailed concluding paragraph]\\n\\n"}}}}
 
-    Ensure that the generated content is relevant to the user's command, well-structured, and provides valuable information on the topic. The response should be a valid JSON object.
-    If none of the specific actions are suitable, use the "process_request" action with the original user command as the request parameter.
-    """
+Example response formats:
+{{"action": "close_window", "params": {{"window_name": "Firefox"}}}}
+{{"action": "list_windows"}}
+{{"action": "no_action", "response": "Hello! How can I assist you with UI automation today?"}}
+{{"action": "process_request", "params": {{"request": "Original user command that implies a specific action but doesn't fit other actions"}}}}
+
+Ensure that the generated content is relevant to the user's command, well-structured, and provides valuable information on the topic. The response should be a valid JSON object.
+"""
 
     retries = 0
     while retries < max_retries:
@@ -989,6 +1057,9 @@ def execute_ui_action(action, params):
             return generate_powerpoint(params.get("title"))
         elif action == "process_request":
             return automater.process_request(params.get("request"))
+        elif action == "screenanalysis":
+            capture_high_quality_screenshot()
+            return analyze_screenshot_with_gemini(params.get("user_prompt"), g_model)
         else:
             return f"Unknown action: {action}"
     except Exception as e:

@@ -30,6 +30,7 @@ llm/
 .project
 .settings/
 .vscode/*
+high_quality_screenshot.png
 
 # Flutter repo-specific
 /bin/cache/
